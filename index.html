@@ -4,91 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multicreate Launcher</title>
-    <link rel="manifest" href="manifest.json">
     <style>
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 50px;
-            background-color: #f0f0f0;
-        }
-        .button {
-            margin: 20px;
-            padding: 15px 30px;
-            font-size: 18px;
-            background-color: #4CAF50;
+            background-color: #222;
             color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
         }
-        .button:hover {
-            background-color: #45a049;
+        .launcher {
+            margin-top: 100px;
         }
-        .title {
-            font-size: 30px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-        button {
-            display: none;
+        select, button {
+            font-size: 18px;
+            padding: 10px;
+            margin: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="title">Welcome to Multicreate Launcher</div>
-    <p>Select a game mode to start:</p>
-
-    <!-- Mode Selection -->
-    <button class="button" onclick="startGame('SurvivalCreate')">Survival Mode</button>
-    <button class="button" onclick="startGame('GirlsCreate')">GirlsCreate Mode</button>
-    <button class="button" onclick="startGame('SciFiCreate')">Sci-Fi Mode</button>
-    <button class="button" onclick="startGame('DungeonCreate')">Dungeon Mode</button>
-
-    <!-- Mods Page Button -->
-    <button class="button" onclick="openMods()">Mods for Multicreate</button>
-
-    <!-- Install Button -->
-    <button onclick="installApp()">Install Multicreate</button>
+    <div class="launcher">
+        <h1>Multicreate Launcher</h1>
+        <p>Select a version to play:</p>
+        <select id="versionSelect">
+            <option value="https://raw.githack.com/tarplayer1/multicreate/main/Multicreate%20vr1.html">Multicreate VR1</option>
+            <option value="https://raw.githack.com/tarplayer1/multicreate/refs/heads/main/Multicreate%20vr2.html">Multicreate VR2</option>
+            <option value="https://raw.githack.com/tarplayer1/multicreate/refs/heads/main/Multicreate%20vr3.html">Multicreate VR3</option>
+            <option value="https://raw.githack.com/tarplayer1/multicreate/refs/heads/main/Multicreate%20vr4.html">Multicreate VR4</option>
+            <option value="https://tarplayer2.github.io">Multicreate VR5</option>
+            <option value="https://raw.githack.com/tarplayer1/multicreate/refs/heads/main/girlscreate.html">GirlsCreate</option>
+        </select>
+        <br>
+        <button onclick="launchGame()">Play</button>
+    </div>
 
     <script>
-        function startGame(mode) {
-            alert("Launching " + mode + "...");
-            window.location.href = mode + ".html"; // Redirect to the selected game mode
-        }
-
-        function openMods() {
-            window.open('https://raw.githack.com/tarplayer1/multicreate/refs/heads/main/mods%20for%20multicreate.html
-', '_blank');
-        }
-
-        // Register the service worker for offline functionality
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js').then((reg) => {
-                console.log('Service Worker Registered', reg);
-            }).catch((err) => {
-                console.log('Service Worker registration failed', err);
-            });
-        }
-
-        // PWA Install logic
-        let deferredPrompt;
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            document.querySelector('button').style.display = 'block';  // Show the install button
-        });
-
-        function installApp() {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    console.log('User accepted the install prompt');
-                } else {
-                    console.log('User dismissed the install prompt');
-                }
-                deferredPrompt = null;
-            });
+        function launchGame() {
+            const selectedVersion = document.getElementById("versionSelect").value;
+            window.location.href = selectedVersion;
         }
     </script>
 </body>
