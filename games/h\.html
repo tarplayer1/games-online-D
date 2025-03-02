@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SWF Game Loader</title>
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+    <link rel="stylesheet" href="c.css">
+    <script src="j.js" defer></script>
+</head>
+<body>
+    <div id="bobbyloader">bobbyloader=D</div>
+    
+    <h2>Upload and Play Flash Games (.swf)</h2>
+    <input type="file" id="swfUpload" accept=".swf">
+    <button onclick="loadSWFGame()">Load Game</button>
+    <button onclick="toggleFullscreen()">Fullscreen</button>
+
+    <!-- Save/Load Buttons -->
+
+
+    <div id="flash-container">
+        <!-- Flash game will be loaded here -->
+    </div>
+</body>
+</html>
