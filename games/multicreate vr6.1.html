@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Your Page</title>
+    <style>body {
+  margin: 0;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+canvas {
+  display: block;
+  background-color: #87CEEB;
+}
+
+    #searchBar {
+      margin-bottom: 10px;
+      padding: 5px;
+      width: 100%;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+#ui {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#ui.hidden {
+  display: none;
+}
+
+#ui button {
+  margin: 5px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#blockList {
+  position: absolute;
+  top: 100px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: none;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.block-item {
+  padding: 5px;
+  cursor: pointer;
+  margin-bottom: 5px;
+  border-radius: 5px;
+}
+
+.block-item:hover {
+  background-color: #f0f0f0;
+}
+</style>
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multicreate Save/Load</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="ui">
+    <h3>Game Controls</h3>
+    <p>Middle click to cycle through blocks. Left click to remove a block. Right click to place a block. Use arrow keys to move the player.</p>
+    <button id="resetButton">Reset World</button>
+    <button id="resetPlayerButton">Reset Player</button>
+    <button id="saveButton">Save World as TXT</button>
+    <button onclick="saveWorld()">Save World as JSON</button>
+  </div>
+  
+  
+  <div id="blockList">
+    <input type="text" id="searchBar" placeholder="Search blocks..." oninput="filterBlocks()" />
+  </div>
+  <canvas id="gameCanvas"></canvas>
+  <input type="file" id="importFile" style="display: none;" accept=".json" onchange="handleFileUpload(event)" />
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+    <script>const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const blockSize = 50;
+const world = [];
+const blockTypes = [
+ { name: "Grass", color: "#228B22" },
+  { name: "Dirt", color: "#8B4513" },
+  { name: "Stone", color: "#808080" },
+  { name: "Sand", color: "#FFD700" },
+  { name: "Wood", color: "#A0522D" },
+  { name: "Water", color: "#1E90FF" },
+  { name: "Lava", color: "#FF4500" },
+  { name: "Brick", color: "#B22222" },
+  { name: "Coal", color: "#2F4F4F" },
+  { name: "Gold", color: "#FFD700" },
+  { name: "Iron", color: "#D4AF37" },
+  { name: "Diamond", color: "#00CED1" },
+  { name: "Emerald", color: "#50C878" },
+  { name: "Obsidian", color: "#2B1B17" },
+  { name: "Snow", color: "#FFFFFF" },
+  { name: "Clay", color: "#B0E0E6" },
+  { name: "Mossy Stone", color: "#556B2F" },
+  { name: "Netherite", color: "#3C3C3C" },
+  { name: "Quartz", color: "#F5F5F5" },
+  { name: "Glowstone", color: "#FFCC00" },
+  { name: "Sandstone", color: "#F4A300" },
+  { name: "Netherrack", color: "#B22222" },
+  { name: "Cactus", color: "#228B22" },
+  { name: "Sugar Cane", color: "#7CFC00" },
+  { name: "Sea Lantern", color: "#00BFFF" },
+  { name: "Prismarine", color: "#2E8B57" },
+  { name: "Turtle Shell", color: "#D2F3C7" },
+  { name: "Nautilus Shell", color: "#9B8C7B" },
+  { name: "Sea Pickle", color: "#00FA9A" },
+  { name: "Kelp", color: "#228B22" },
+  { name: "Coral Block", color: "#FF6347" },
+  { name: "Bubble Coral Block", color: "#F0E68C" },
+  { name: "Brain Coral Block", color: "#A0522D" },
+  { name: "Fire Coral Block", color: "#FF4500" },
+  { name: "Horn Coral Block", color: "#FFD700" },
+  { name: "Tube Coral Block", color: "#8A2BE2" },
+  { name: "Coral Fan", color: "#FF6347" },
+  { name: "Blue Ice", color: "#ADD8E6" },
+  { name: "Packed Ice", color: "#B0E0E6" },
+  { name: "Ice", color: "#00FFFF" },
+  { name: "Magma Block", color: "#E34234" },
+  { name: "End Rod", color: "#D3D3D3" },
+  { name: "Barrier", color: "#C0C0C0" },
+  { name: "Structure Block", color: "#A9A9A9" },
+  { name: "Command Block", color: "#4B0082" },
+  { name: "Jukebox", color: "#A52A2A" },
+  { name: "Note Block", color: "#8B4513" },
+  { name: "Dispenser", color: "#808080" },
+  { name: "Dropper", color: "#C0C0C0" },
+  { name: "Hopper", color: "#B0B0B0" },
+  { name: "Piston", color: "#D2691E" },
+  { name: "Sticky Piston", color: "#D2691E" },
+  { name: "Observer", color: "#A9A9A9" },
+  { name: "Redstone Block", color: "#9B111E" },
+  { name: "Redstone Torch", color: "#9B111E" },
+  { name: "Lever", color: "#A0522D" },
+  { name: "Button", color: "#8B4513" },
+  { name: "Pressure Plate", color: "#C2B280" },
+  { name: "Tripwire Hook", color: "#C2B280" },
+  { name: "Wooden Pressure Plate", color: "#D2B48C" },
+  { name: "Stone Pressure Plate", color: "#A9A9A9" },
+  { name: "Iron Trapdoor", color: "#D3D3D3" },
+  { name: "Wooden Trapdoor", color: "#C2B280" },
+  { name: "Fence", color: "#A52A2A" },
+  { name: "Gate", color: "#A52A2A" },
+  { name: "Wall", color: "#D2691E" },
+  { name: "Lantern", color: "#FFD700" },
+  { name: "Soul Lantern", color: "#8B008B" },
+  { name: "Torch", color: "#FF8C00" },
+  { name: "Soul Torch", color: "#8B0000" },
+  { name: "Ender Chest", color: "#8A2BE2" },
+  { name: "Chest", color: "#8B4513" },
+  { name: "Trapped Chest", color: "#A52A2A" },
+  { name: "Shulker Box (Pink)", color: "#FFC0CB" },
+  { name: "Shulker Box (Gray)", color: "#BEBEBE" },
+  { name: "Shulker Box (Brown)", color: "#8B4513" },
+  { name: "Shulker Box (Light Blue)", color: "#ADD8E6" },
+  { name: "Shulker Box (Purple)", color: "#800080" },
+  { name: "Shulker Box (Green)", color: "#228B22" },
+  { name: "Crystalwood", color: "#D9A8FF" },
+  { name: "Froststone", color: "#A3D8F4" },
+  { name: "Glowroot", color: "#8CFF8B" },
+  { name: "Mystic Sand", color: "#E0A5A5" },
+  { name: "Starshard", color: "#4B0082" },
+  { name: "Volcanic Ash", color: "#9E1B32" },
+  { name: "Solarite", color: "#FFD700" },
+  { name: "Lunarstone", color: "#4B4B6B" },
+  { name: "Obsidian Glass", color: "#1A1A1A" },
+  { name: "Cloudstone", color: "#C7D3D5" },
+  { name: "Thunderstone", color: "#FF6F00" },
+  { name: "Crimson Mushroom", color: "#E60000" },
+  { name: "Goldenleaf", color: "#C5A500" },
+  { name: "Frostbite Wood", color: "#A8D8FF" },
+  { name: "Nightglow Vine", color: "#3E4B66" },
+  { name: "Oceanstone", color: "#006F83" },
+  { name: "Shadowsteel", color: "#434A4F" },
+  { name: "Radiant Quartz", color: "#F2C2F7" },
+  { name: "Cavernstone", color: "#2B2D2F" },
+  { name: "Eclipsed Pearl", color: "#D3A9B0" },
+  { name: "Dreamwood", color: "#E7C9D7" },
+  { name: "Silverstone", color: "#B7BCC1" },
+  { name: "Frostglass", color: "#A7D8FF" },
+  { name: "Petrified Root", color: "#6F3C1C" },
+  { name: "Emberstone", color: "#D94B31" },
+  { name: "Soulmoss", color: "#2D6A1F" },
+  { name: "Mystic Crystal", color: "#9E7CC7" },
+  { name: "Hollowlog", color: "#8B5A3E" },
+  { name: "Nebulite", color: "#3A5F89" },
+  { name: "Starlight Bricks", color: "#B9C6C6" },
+  { name: "Nightshade Leaf", color: "#6F3F4F" },
+  { name: "Sunstone", color: "#FFDF00" },
+  { name: "Ironwood", color: "#6A2F3F" },
+  { name: "Tempest Stone", color: "#829BB4" },
+  { name: "Hollowstone", color: "#4C4C4C" },
+  { name: "Crystal Shards", color: "#7FFFD4" },
+  { name: "Obsidian Blade", color: "#1A1A1A" },
+  { name: "Granite", color: "#B22222" },
+{ name: "Polished Granite", color: "#8B0000" },
+{ name: "Diorite", color: "#D3D3D3" },
+{ name: "Polished Diorite", color: "#A9A9A9" },
+{ name: "Andesite", color: "#A9A9A9" },
+{ name: "Polished Andesite", color: "#BEBEBE" },
+{ name: "Tuff", color: "#C8A2A8" },
+{ name: "Dripstone Block", color: "#F0F8FF" },
+{ name: "Spore Blossom", color: "#9F8D4F" },
+{ name: "Glow Lichen", color: "#8E8E8E" },
+{ name: "Amethyst Block", color: "#9966CC" },
+{ name: "Deepslate", color: "#1C1C1C" },
+{ name: "Deepslate Diamond Ore", color: "#4B0082" },
+{ name: "Deepslate Emerald Ore", color: "#50C878" },
+{ name: "Deepslate Gold Ore", color: "#FFD700" },
+{ name: "Deepslate Iron Ore", color: "#D4AF37" },
+{ name: "Deepslate Copper Ore", color: "#B87333" },
+{ name: "Copper Block", color: "#B87333" },
+{ name: "Exposed Copper", color: "#A6A6A6" },
+{ name: "Weathered Copper", color: "#6B6B6B" },
+{ name: "Oxidized Copper", color: "#4F4F4F" },
+{ name: "Lightning Rod", color: "#B87333" },
+{ name: "Smooth Basalt", color: "#282828" },
+{ name: "Basalt", color: "#7F7F7F" },
+{ name: "Blackstone", color: "#1C1C1C" },
+{ name: "Polished Blackstone", color: "#3A3A3A" },
+{ name: "Polished Blackstone Brick", color: "#3C3C3C" },
+{ name: "Chiseled Polished Blackstone", color: "#2C2C2C" },
+{ name: "Blackstone Brick", color: "#4A4A4A" },
+{ name: "Nether Quartz Ore", color: "#F5F5F5" },
+{ name: "Soul Sand", color: "#3E2A47" },
+{ name: "Soul Soil", color: "#4B2E83" },
+{ name: "Crimson Stem", color: "#9E0047" },
+{ name: "Crimson Hyphae", color: "#8B0032" },
+{ name: "Warped Stem", color: "#006F4F" },
+{ name: "Warped Hyphae", color: "#005F42" },
+{ name: "Weeping Vines", color: "#8A2BE2" },
+{ name: "Twisting Vines", color: "#006400" },
+{ name: "Shroomlight", color: "#F1C232" },
+{ name: "Honey Block", color: "#FFC107" },
+{ name: "Honeycomb Block", color: "#FF6F00" },
+{ name: "Bee Nest", color: "#F9E79F" },
+{ name: "Beehive", color: "#F5D76E" },
+{ name: "Pink Wool", color: "#F1A7C9" },
+{ name: "Light Blue Wool", color: "#ADD8E6" },
+{ name: "Yellow Wool", color: "#FFEB3B" },
+{ name: "Green Wool", color: "#66BB6A" },
+{ name: "Red Wool", color: "#F44336" },
+{ name: "Blue Wool", color: "#2196F3" },
+{ name: "Purple Wool", color: "#9C27B0" },
+{ name: "Orange Wool", color: "#FF9800" },
+{ name: "White Wool", color: "#FFFFFF" },
+{ name: "Gray Wool", color: "#B0BEC5" },
+{ name: "Black Wool", color: "#263238" },
+{ name: "Brown Wool", color: "#6A4E23" },
+{ name: "Lime Wool", color: "#CDDC39" },
+{ name: "Magenta Wool", color: "#D500F9" },
+{ name: "Light Gray Wool", color: "#D1D8E0" },
+{ name: "Cyan Wool", color: "#00BCD4" },
+{ name: "Pink Banner", color: "#F8B0B0" },
+{ name: "Green Banner", color: "#66BB6A" },
+{ name: "Blue Banner", color: "#2196F3" },
+{ name: "Yellow Banner", color: "#FFEB3B" },
+{ name: "Red Banner", color: "#F44336" },
+{ name: "Black Banner", color: "#263238" },
+{ name: "White Banner", color: "#FFFFFF" },
+{ name: "Purple Banner", color: "#9C27B0" },
+{ name: "Orange Banner", color: "#FF9800" },
+{ name: "Light Blue Banner", color: "#ADD8E6" },
+{ name: "Gray Banner", color: "#B0BEC5" },
+{ name: "Magenta Banner", color: "#D500F9" },
+{ name: "Lime Banner", color: "#CDDC39" },
+{ name: "Cyan Banner", color: "#00BCD4" },
+{ name: "Tipped Arrow", color: "#FF4C4C" },
+  { name: "Potion", color: "#7B68EE" },
+
+  // Every single color
+  { name: "White", color: "#FFFFFF" },
+  { name: "Black", color: "#000000" },
+  { name: "Red", color: "#FF0000" },
+  { name: "Green", color: "#00FF00" },
+  { name: "Blue", color: "#0000FF" },
+  { name: "Yellow", color: "#FFFF00" },
+  { name: "Cyan", color: "#00FFFF" },
+  { name: "Magenta", color: "#FF00FF" },
+  { name: "Gray", color: "#808080" },
+  { name: "Light Gray", color: "#D3D3D3" },
+  { name: "Dark Gray", color: "#A9A9A9" },
+  { name: "Light Red", color: "#FF6347" },
+  { name: "Light Green", color: "#90EE90" },
+  { name: "Light Blue", color: "#ADD8E6" },
+  { name: "Light Yellow", color: "#FFFFE0" },
+  { name: "Light Cyan", color: "#E0FFFF" },
+  { name: "Light Magenta", color: "#FFB6C1" },
+  { name: "Dark Red", color: "#8B0000" },
+  { name: "Dark Green", color: "#006400" },
+  { name: "Dark Blue", color: "#00008B" },
+  { name: "Dark Yellow", color: "#9B870C" },
+  { name: "Dark Cyan", color: "#008B8B" },
+  { name: "Dark Magenta", color: "#8B008B" },
+  { name: "Light Pink", color: "#FFB6C1" },
+  { name: "Dark Pink", color: "#DDA0DD" },
+  { name: "Brown", color: "#A52A2A" },
+  { name: "Beige", color: "#F5F5DC" },
+  { name: "Peach", color: "#FFDAB9" },
+  { name: "Purple", color: "#800080" },
+  { name: "Tan", color: "#D2B48C" },
+  { name: "Olive", color: "#808000" },
+  { name: "Indigo", color: "#4B0082" },
+  { name: "Violet", color: "#EE82EE" },
+  { name: "Lavender", color: "#E6E6FA" },
+  { name: "Turquoise", color: "#40E0D0" },
+  { name: "Salmon", color: "#FA8072" },
+  { name: "Gold", color: "#FFD700" },
+  { name: "Silver", color: "#C0C0C0" },
+  { name: "Copper", color: "#B87333" },
+  { name: "Shulker Box (Yellow)", color: "#FFFF00" },
+  { name: "Shulker Box (Blue)", color: "#0000FF" },
+  { name: "Shulker Box (Red)", color: "#FF0000" },
+  { name: "Shulker Box (Orange)", color: "#FFA500" },
+  { name: "Mud", color: "#6F4F37" },
+  { name: "Mud Brick", color: "#A0522D" },
+  { name: "Moss Block", color: "#8A9A5B" },
+  { name: "Moss Carpet", color: "#7F8D44" },
+  { name: "Spore Blossom", color: "#E1D4A4" },
+  { name: "Bamboo", color: "#66BB6A" },
+  { name: "Bamboo Planks", color: "#7C8B3D" },
+  { name: "Mangrove Wood", color: "#2E1A47" },
+  { name: "Mangrove Planks", color: "#A34F4F" },
+  { name: "Mangrove Leaves", color: "#7A5732" },
+  { name: "Muddy Mangrove Roots", color: "#7F4F1E" },
+  { name: "Dried Kelp Block", color: "#6E6E3F" },
+  { name: "Sculk Block", color: "#5C5C5C" },
+  { name: "Sculk Vein", color: "#444444" },
+  { name: "Sculk Catalyst", color: "#666666" },
+  { name: "Sculk Shriekers", color: "#4F4F4F" },
+  { name: "Budding Amethyst", color: "#D8A3F2" },
+  { name: "Amethyst Block", color: "#C9A3F9" },
+  { name: "Tuff", color: "#9A9A9A" },
+  { name: "Dripstone Block", color: "#8A6F5A" },
+  { name: "Pointed Dripstone", color: "#9F9F7F" },
+  { name: "Lush Cave Floor", color: "#6A7B36" },
+  { name: "Hanging Roots", color: "#4A4A4A" },
+  { name: "Glow Lichen", color: "#C9D1B7" },
+  { name: "Rooted Dirt", color: "#5D3F1F" },
+  { name: "Saddle", color: "#7E6E3B" },
+  { name: "Bundle", color: "#8A6E5F" },
+  { name: "Bastion Remnant Block", color: "#503C29" },
+  { name: "Nether Gold Ore", color: "#FFB800" },
+  { name: "Respawn Anchor", color: "#4B8B4A" },
+  { name: "Ancient Debris", color: "#502C3B" },
+  { name: "Crimson Stem", color: "#9B2D2F" },
+  { name: "Crimson Hyphae", color: "#7C2123" },
+  { name: "Crimson Planks", color: "#9A292B" },
+  { name: "Warped Stem", color: "#55AFAF" },
+  { name: "Warped Hyphae", color: "#397D7F" },
+  { name: "Warped Planks", color: "#578C8E" },
+  { name: "Weeping Vines", color: "#5F7F74" },
+  { name: "Twisting Vines", color: "#5C8E9E" },
+  { name: "Crimson Fungi", color: "#FF6276" },
+  { name: "Warped Fungi", color: "#55D7B2" },
+  { name: "Nether Wart Block", color: "#6E1F1F" },
+  { name: "Soul Soil", color: "#453C3C" },
+  { name: "Soul Sand", color: "#C4B18D" },
+  { name: "Chiseled Nether Bricks", color: "#7A3E3E" },
+  { name: "Chiseled Stone Bricks", color: "#B9B9B9" },
+  { name: "Cracked Nether Bricks", color: "#5E3232" },
+  { name: "Cracked Stone Bricks", color: "#A3A3A3" },
+  { name: "Mossy Cobblestone", color: "#5B6B46" },
+  { name: "Mossy Stone Bricks", color: "#5C5C5C" },
+  { name: "Polished Andesite", color: "#A1A1A1" },
+  { name: "Polished Diorite", color: "#D1D1D1" },
+  { name: "Polished Granite", color: "#B24C3A" },
+  { name: "Quartz Block", color: "#E9E9E9" },
+  { name: "Smooth Quartz", color: "#F3F3F3" },
+  { name: "Smooth Stone", color: "#A3A3A3" },
+  { name: "Stone Brick", color: "#A2A2A2" },
+  { name: "Stone", color: "#7F7F7F" },
+  { name: "Cobblestone", color: "#7A7A7A" },
+  { name: "Sandstone", color: "#D1B086" },
+  { name: "Smooth Sandstone", color: "#D8B17D" },
+  { name: "Red Sandstone", color: "#E6A48D" },
+  { name: "Smooth Red Sandstone", color: "#D6896B" },
+  { name: "End Stone", color: "#F5E7A2" },
+  { name: "End Stone Bricks", color: "#F5D9A1" },
+  { name: "Purpur Block", color: "#7A4D9B" },
+  { name: "Purpur Pillar", color: "#6A4292" },
+  { name: "Beacon", color: "#D7F0F5" },
+  { name: "Iron Block", color: "#B8B8B8" },
+  { name: "Gold Block", color: "#FFD700" },
+  { name: "Diamond Block", color: "#56B7D3" },
+  { name: "Emerald Block", color: "#60E000" },
+  { name: "Redstone Block", color: "#D70000" },
+  { name: "Lapis Lazuli Block", color: "#3B5DB0" },
+  { name: "Clay", color: "#8E7D7B" },
+  { name: "Terracotta", color: "#D1784A" },
+  { name: "Glazed Terracotta", color: "#E1A7A3" },
+  { name: "Concrete", color: "#A8A8A8" },
+  { name: "Concrete Powder", color: "#A8A8A8" },
+  { name: "Glass", color: "#FFFFFF" },
+  { name: "Stained Glass", color: "#C3B0F6" },
+  { name: "Stained Glass Pane", color: "#C3B0F6" },
+  { name: "TNT", color: "#E57373" },
+  { name: "Cake", color: "#F7C4A2" },
+  { name: "Pumpkin", color: "#FF7F00" },
+  { name: "Jack o'Lantern", color: "#FFA200" },
+  { name: "Melon", color: "#FBB917" },
+  { name: "Hay Bale", color: "#F4D03F" },
+  { name: "Bookshelf", color: "#9B6D3B" },
+  { name: "Ender Chest", color: "#2F2F2F" },
+  { name: "Blast Furnace", color: "#6E6E6E" },
+  { name: "Smoker", color: "#9C8F82" },
+  { name: "Barrel", color: "#7A4D2F" },
+  { name: "Composter", color: "#4F3A2A" },
+  { name: "Furnace", color: "#595959" },
+  { name: "Dispenser", color: "#7D7D7D" },
+  { name: "Dropper", color: "#B8B8B8" },
+  { name: "Hopper", color: "#888888" },
+  { name: "Jukebox", color: "#D2645A" },
+  { name: "Note Block", color: "#BB735F" },
+  { name: "Cauldron", color: "#A4A4A4" },
+  { name: "Anvil", color: "#787878" },
+  { name: "Grindstone", color: "#9B9B9B" },
+  { name: "Lectern", color: "#8B6F3D" },
+  { name: "Stone Cutter", color: "#A3A3A3" },
+  { name: "Cartography Table", color: "#7A4F2A" },
+  { name: "Smithing Table", color: "#7A4B3E" },
+  { name: "Fletching Table", color: "#6F6B49" },
+  { name: "Loom", color: "#7D6746" },
+  { name: "Blast Furnace", color: "#6E6E6E" },
+  { name: "Smoker", color: "#9C8F82" },
+  { name: "Barrel", color: "#7A4D2F" },
+  { name: "Bamboo Sapling", color: "#A7C177" },
+      { name: "Crystal Glass", color: "#E0FFFF" },
+{ name: "Magnetite", color: "#A0A0A0" },
+{ name: "Spiral Stone", color: "#6B6B6B" },
+{ name: "Living Wood", color: "#8B8B3C" },
+{ name: "Mossy Cobblestone", color: "#708238" },
+{ name: "Glowstone Slab", color: "#FFD700" },
+{ name: "Meteorite Ore", color: "#7E3B3B" },
+{ name: "Honeycomb Slab", color: "#FFB84D" },
+{ name: "Frozen Ember", color: "#FF6F91" },
+{ name: "Solar Panel", color: "#F1C232" },
+{ name: "Volcanic Stone", color: "#7F2A2A" },
+{ name: "Crystal Tree", color: "#A7C9F5" },
+{ name: "Coral Sand", color: "#F2B28F" },
+{ name: "Shadow Silk", color: "#4E4E4E" },
+{ name: "Lunar Crystals", color: "#A1C2D1" },
+{ name: "Venomous Vine", color: "#6B8E23" },
+{ name: "Magical Fern", color: "#8FBC8F" },
+{ name: "Obsidian Glass", color: "#4D4D4D" },
+{ name: "Stormstone", color: "#708090" },
+{ name: "Chameleon Block", color: "#008000" },
+{ name: "Wormwood", color: "#9B6B4B" },
+{ name: "Celestial Stone", color: "#7081A2" },
+{ name: "Rainbow Glass", color: "#FF69B4" },
+{ name: "Dragon Scale", color: "#8B0000" },
+{ name: "Blightstone", color: "#6A3A3A" },
+{ name: "Lunar Soil", color: "#D4D4D4" },
+{ name: "Fireflower", color: "#FF6347" },
+{ name: "Ice Fern", color: "#B0E0E6" },
+{ name: "Spirit Stone", color: "#F5F5F5" },
+{ name: "Starlight Stone", color: "#A2B3D6" },
+{ name: "Rainbow Sand", color: "#FF1493" },
+{ name: "Time Capsule", color: "#FFDAB9" },
+{ name: "Glimmerwood", color: "#A5A5A5" },
+{ name: "Vortex Block", color: "#2F4F4F" },
+{ name: "Duststone", color: "#D3D3D3" },
+{ name: "Electric Cable", color: "#FFFF00" },
+{ name: "Dreamstone", color: "#C7C9F2" },
+{ name: "Frost Wood", color: "#E0FFFF" },
+{ name: "Shattered Rock", color: "#5A4B3A" },
+{ name: "Glowcap Fungus", color: "#FF8C00" },
+{ name: "Deepsea Stone", color: "#3E6B6A" },
+{ name: "Violet Sapling", color: "#8A2BE2" },
+{ name: "Fossilized Stone", color: "#8B7765" },
+{ name: "Molten Rock", color: "#FF4500" },
+{ name: "Etherium", color: "#00BFFF" },
+{ name: "Solar Block", color: "#F9A825" },
+{ name: "Lightstone", color: "#FFFFE0" },
+{ name: "Obsidian Root", color: "#1C1C1C" },
+{ name: "Frozen Iron", color: "#C0C0C0" },
+{ name: "Thunder Oak", color: "#FFB6C1" },
+{ name: "Silverleaf", color: "#C0C0C0" },
+{ name: "Embervine", color: "#FF6347" },
+{ name: "Ashen Grass", color: "#D3D3D3" },
+{ name: "Nuclear Ore", color: "#00FF00" },
+{ name: "Pulsar Stone", color: "#3B9E9E" },
+{ name: "Crystalline Moss", color: "#5F9B9F" },
+{ name: "Silver Crystals", color: "#C5C5C5" },
+{ name: "Sunstone Pillar", color: "#F5A623" },
+{ name: "Floating Rock", color: "#C0C0C0" },
+      { name: "Tire", color: "#4B4B4B" },
+{ name: "Mud", color: "#6B4F31" },
+{ name: "Bamboo", color: "#6B8E23" },
+{ name: "Petal", color: "#FFC0CB" },
+{ name: "Mudbrick", color: "#B8860B" },
+{ name: "Rusty Iron", color: "#B7410E" },
+{ name: "Magnetic Stone", color: "#696969" },
+{ name: "Plank", color: "#DEB887" },
+{ name: "Fabric", color: "#D2B48C" },
+{ name: "Paper", color: "#F5F5F5" },
+{ name: "Wool", color: "#D3D3D3" },
+{ name: "Marble", color: "#DCDCDC" },
+{ name: "Granite Pillar", color: "#B22222" },
+{ name: "Ice Brick", color: "#B0E0E6" },
+{ name: "Frosted Glass", color: "#00BFFF" },
+{ name: "Limestone", color: "#D3D3D3" },
+{ name: "Volcanic Stone", color: "#800000" },
+{ name: "Cavern Brick", color: "#808080" },
+{ name: "Black Marble", color: "#1C1C1C" },
+{ name: "Reinforced Glass", color: "#A9A9A9" },
+{ name: "Silt", color: "#BDB76B" },
+{ name: "Crystal Block", color: "#7FFFD4" },
+{ name: "Wormwood", color: "#9C9A61" },
+{ name: "Mirror", color: "#C0C0C0" },
+{ name: "Glimmerstone", color: "#FFD700" },
+{ name: "Shimmer Glass", color: "#E0FFFF" },
+{ name: "Warped Coral", color: "#FF6347" },
+{ name: "Lava Rock", color: "#E34234" },
+{ name: "Plasma Block", color: "#8A2BE2" },
+{ name: "Radiant Stone", color: "#FF4500" },
+{ name: "Stellar Gem", color: "#8A2BE2" },
+{ name: "Mystic Clay", color: "#F5F5DC" },
+{ name: "Echo Rock", color: "#A9A9A9" },
+{ name: "Stone Carving", color: "#6B6B6B" },
+{ name: "Jade", color: "#00A36C" },
+{ name: "Ivory", color: "#FFFFF0" },
+{ name: "Silverleaf", color: "#C0C0C0" },
+{ name: "Ivory Brick", color: "#F0F0F0" },
+{ name: "Firestone", color: "#DC143C" },
+{ name: "Steampunk Gear", color: "#9E7B4F" },
+{ name: "Gilded Plate", color: "#FFD700" },
+{ name: "Dreamstone", color: "#F0E68C" },
+{ name: "Glow Ember", color: "#FFA07A" },
+{ name: "Moonstone", color: "#C0C0C0" },
+{ name: "Astrostone", color: "#4B0082" },
+{ name: "Witchwood", color: "#D3C2A8" },
+{ name: "Void Block", color: "#000000" },
+{ name: "Twilight Brick", color: "#8B008B" },
+{ name: "Aurora Stone", color: "#00FA9A" },
+{ name: "Eclipse Block", color: "#6A5ACD" },
+{ name: "Starstone", color: "#F0F8FF" },
+{ name: "Cloud Brick", color: "#F0FFFF" },
+{ name: "Glowstone Slab", color: "#FF6347" },
+{ name: "Sandstone Pillar", color: "#F4A300" },
+{ name: "Amber Block", color: "#FFBF00" },
+{ name: "Cinderblock", color: "#D2691E" },
+{ name: "Blue Crystal", color: "#87CEFA" },
+{ name: "Honeycomb", color: "#F4A300" },
+{ name: "Rime", color: "#D9E4F2" },
+{ name: "Blossom Leaf", color: "#FFB6C1" },
+{ name: "Ruby Ore", color: "#9B111E" },
+{ name: "Emerald Ore", color: "#50C878" },
+{ name: "Sapphire Ore", color: "#0F52BA" },
+{ name: "Glowstone Crystals", color: "#FF4500" },
+{ name: "Fungal Growth", color: "#8B4513" },
+{ name: "Hollowstone Pillar", color: "#696969" },
+{ name: "Flamevine", color: "#FF4500" },
+{ name: "Frozen Bamboo", color: "#9ACD32" },
+{ name: "Ancient Stone", color: "#8B8B8B" },
+{ name: "Tempest Block", color: "#ADD8E6" },
+{ name: "Starcrystal", color: "#D3D3D3" },
+      { name: "Crimson Glass", color: "#DC143C" },
+{ name: "Twisted Vine", color: "#8B4513" },
+{ name: "Nether Brick", color: "#800000" },
+{ name: "Obsidian Plate", color: "#000000" },
+{ name: "Violet Quartz", color: "#EE82EE" },
+{ name: "Radiant Steel", color: "#B0C4DE" },
+{ name: "Frostbrick", color: "#E0FFFF" },
+{ name: "Echo Crystal", color: "#8A2BE2" },
+{ name: "Moonlit Marble", color: "#B0E0E6" },
+{ name: "Ancient Oak", color: "#8B5A2B" },
+{ name: "Volcanic Ash", color: "#A9A9A9" },
+{ name: "Deepstone", color: "#4B0082" },
+{ name: "Flarestone", color: "#FF4500" },
+{ name: "Solar Panel", color: "#FFFF00" },
+{ name: "Galaxy Block", color: "#6A5ACD" },
+{ name: "Mystic Slate", color: "#708090" },
+{ name: "Arctic Ice", color: "#ADD8E6" },
+{ name: "Golden Oak", color: "#FFD700" },
+{ name: "Dewstone", color: "#98FB98" },
+{ name: "Tectonic Slate", color: "#A9A9A9" },
+{ name: "Bio Glass", color: "#00FF7F" },
+{ name: "Celestial Stone", color: "#4682B4" },
+{ name: "Prismarine Block", color: "#66CDAA" },
+{ name: "Bitterstone", color: "#D2691E" },
+{ name: "Cloudstone", color: "#F5F5F5" },
+{ name: "Solarstone", color: "#FFD700" },
+{ name: "Dreamwood", color: "#D8BFD8" },
+{ name: "Vibrant Marble", color: "#FFD700" },
+{ name: "Lush Moss", color: "#556B2F" },
+{ name: "Coral Reef", color: "#FF7F50" },
+{ name: "Lightning Block", color: "#FFFF00" },
+{ name: "Goldenbrick", color: "#FFD700" },
+{ name: "Junglewood", color: "#228B22" },
+{ name: "Coral Sand", color: "#FF6347" },
+{ name: "Stormstone", color: "#2F4F4F" },
+{ name: "Quartzite", color: "#D3D3D3" },
+{ name: "Icecrystal", color: "#00BFFF" },
+{ name: "Shale", color: "#A9A9A9" },
+{ name: "Sunlit Stone", color: "#FFD700" },
+{ name: "Fungal Wood", color: "#8B4513" },
+{ name: "Meteorite Stone", color: "#B22222" },
+{ name: "Wispwood", color: "#F0FFFF" },
+{ name: "Glimmerstone", color: "#FFD700" },
+{ name: "Starbrick", color: "#8A2BE2" },
+{ name: "Blazing Stone", color: "#FF4500" },
+{ name: "Glimmerleaf", color: "#98FB98" },
+{ name: "Hollow Marble", color: "#DCDCDC" },
+{ name: "Enderstone", color: "#8A2BE2" },
+{ name: "Rustwood", color: "#A52A2A" },
+{ name: "Sulphur Stone", color: "#FFD700" },
+{ name: "Netherstone", color: "#2F4F4F" },
+{ name: "Elderwood", color: "#556B2F" },
+{ name: "Ashen Brick", color: "#D3D3D3" },
+{ name: "Enchanted Oak", color: "#D2691E" },
+{ name: "Moonstone Tile", color: "#D3D3D3" },
+{ name: "Wyrmstone", color: "#483D8B" },
+{ name: "Sunstone", color: "#FF6347" },
+{ name: "Lava Glass", color: "#FF4500" },
+{ name: "Phoenix Feather", color: "#FFD700" },
+{ name: "Dark Quartz", color: "#8B4513" },
+{ name: "Crystal Pylon", color: "#00FFFF" },
+{ name: "Silver Oak", color: "#C0C0C0" },
+{ name: "Cobalt Block", color: "#0047AB" },
+{ name: "Nebula Stone", color: "#800080" },
+{ name: "Frozen Quartz", color: "#87CEFA" },
+{ name: "Emberstone", color: "#FF4500" },
+{ name: "Icy Marble", color: "#B0E0E6" },
+{ name: "Hollow Glass", color: "#F5F5F5" },
+{ name: "Obsidian Tile", color: "#000000" },
+{ name: "Firewood", color: "#A52A2A" },
+{ name: "Silverstone", color: "#C0C0C0" },
+{ name: "Moonlit Ice", color: "#F0F8FF" },
+{ name: "Witchstone", color: "#800080" },
+{ name: "Endstone Brick", color: "#B0C4DE" },
+{ name: "Spectral Glass", color: "#F0FFFF" },
+{ name: "Riftstone", color: "#483D8B" },
+{ name: "Sapphire Brick", color: "#0F52BA" },
+{ name: "Blue Sapphire", color: "#1E90FF" },
+{ name: "Ironwood", color: "#8B4513" },
+{ name: "Crystal Tower", color: "#7FFFD4" },
+{ name: "Arcane Block", color: "#8A2BE2" },
+{ name: "Quartz Sand", color: "#D3D3D3" },
+{ name: "Aetherstone", color: "#E6E6FA" },
+      { name: "Galactic Crystals", color: "#7B68EE" }, // Space-themed block
+{ name: "Antimatter Core", color: "#000000" }, // Never exist, pure fictional element
+{ name: "Stardust Shards", color: "#D8BFD8" }, // Space-themed
+{ name: "Nebula Fiber", color: "#8A2BE2" }, // Space-themed, ethereal material
+{ name: "Voidstone", color: "#1E1E1E" }, // A block from a void dimension
+{ name: "Quantum Brick", color: "#008B8B" }, // Sci-fi inspired, quantum mechanics
+{ name: "Plasma Glass", color: "#00FFFF" }, // Like something you'd find in space bases
+{ name: "Supernova Ore", color: "#FF1493" }, // Explosive, powerful cosmic material
+{ name: "Meteorite Chunk", color: "#A52A2A" }, // Space-themed, extraterrestrial
+{ name: "Black Hole Crystal", color: "#00008B" }, // Never exist, drawn from theoretical physics
+{ name: "Asteroid Rock", color: "#808080" }, // Space-themed
+{ name: "Hyperdrive Plate", color: "#FF6347" }, // A futuristic tech block
+{ name: "Moonstone", color: "#B0E0E6" }, // Lunar-inspired material
+{ name: "Dark Matter Block", color: "#696969" }, // Impossible material, space concept
+{ name: "Exoplanet Gravel", color: "#D3D3D3" }, // Gravel found on another planet
+{ name: "Lunar Glass", color: "#C0C0C0" }, // Glass from a moon's surface
+{ name: "Photon Brick", color: "#FFFF00" }, // Block made of light energy
+{ name: "Anti-Gravity Tile", color: "#98FB98" }, // Gravity-defying block
+{ name: "Cryo-Crystal", color: "#ADD8E6" }, // Extremely cold, science-fiction block
+{ name: "Dark Nebula", color: "#800080" }, // A mysterious space anomaly
+{ name: "Frozen Helium", color: "#E0FFFF" }, // Frozen material found in space
+{ name: "Wormhole Core", color: "#32CD32" }, // A theoretical block found near wormholes
+{ name: "Frost Comet", color: "#4682B4" }, // A cold, icy comet fragment
+{ name: "Quantum Ore", color: "#A9A9A9" }, // Fictional ore with quantum properties
+{ name: "Space-Time Stone", color: "#7FFF00" }, // Altering the fabric of space and time
+{ name: "Graviton Block", color: "#B0C4DE" }, // Manipulating gravity in space
+{ name: "Zero-Point Energy Core", color: "#0000FF" }, // An energy block that defies physics
+{ name: "Xenon Rock", color: "#B22222" }, // A rare alien mineral
+{ name: "Starfall Sand", color: "#FFD700" }, // Sparkling sand from falling stars
+{ name: "Chrono Crystal", color: "#FF6347" }, // Time-manipulating block
+{ name: "Cosmic Ice", color: "#B0E0E6" }, // Icy material found in deep space
+{ name: "Solar Flare Brick", color: "#FF4500" }, // Solar energy-themed block
+{ name: "Dark Nebula Block", color: "#2F4F4F" }, // Black hole-like block
+{ name: "Void Crystals", color: "#1C1C1C" }, // Mystical and alien material from the void
+{ name: "Eclipse Stone", color: "#4B0082" }, // A block that exists only during solar eclipses
+{ name: "Ionite", color: "#7FFF00" }, // A power source found on alien planets
+{ name: "Astral Stone", color: "#8B0000" }, // Mysterious stone from outer space
+{ name: "Zero-Gravity Shards", color: "#00FA9A" }, // A shard that floats in zero gravity
+{ name: "Nebula Glass", color: "#FF00FF" }, // Glass formed from nebula gases
+{ name: "Oxygenite", color: "#00BFFF" }, // A block that produces breathable air
+{ name: "Gamma Beam Block", color: "#00FF00" }, // Block radiating gamma rays
+{ name: "Antigrav Slime", color: "#FF8C00" }, // A liquid block with antigravitational properties
+{ name: "AstroBrick", color: "#1E90FF" }, // A futuristic, space age building material
+{ name: "Solar Panel Block", color: "#FFFF00" }, // A block that captures solar energy
+{ name: "Magnetite Ore", color: "#000080" }, // A rare magnetic ore found on distant planets
+{ name: "Cosmic Silk", color: "#C71585" }, // Material woven from cosmic threads
+{ name: "Fission Block", color: "#FFD700" }, // A theoretical block that undergoes nuclear fission
+{ name: "Plasma Forge", color: "#FF6347" }, // A forge made from plasma energy
+{ name: "Stellar Quartz", color: "#FF1493" }, // A block formed under extreme stellar conditions
+{ name: "Pulsar Shards", color: "#DAA520" }, // Shards of a pulsar, a fast-rotating neutron star
+{ name: "Warpstone", color: "#9932CC" }, // A block found at the entrance of a space warp
+{ name: "Lunar Dust", color: "#DCDCDC" }, // Dust found on the surface of the moon
+{ name: "Astral Root", color: "#32CD32" }, // An alien plant material from an unknown world
+{ name: "Planetary Core", color: "#A52A2A" }, // A chunk of an alien planet's core
+{ name: "Stasis Stone", color: "#A9A9A9" }, // A block that freezes time in place
+{ name: "Plasma Shield", color: "#C71585" }, // A protective shield made of plasma energy
+{ name: "Gravitational Crystal", color: "#D3D3D3" }, // A rare crystal that bends gravity
+{ name: "Solar Wind Cloth", color: "#FF69B4" }, // Fabric made from solar winds
+{ name: "Alien Fungus", color: "#6B8E23" }, // Fungus that grows in space
+{ name: "Ion Dust", color: "#B22222" }, // Dust that floats and has ionizing properties
+{ name: "Void Jelly", color: "#8B4513" }, // A strange and dangerous jelly from another dimension
+{ name: "Starforged Steel", color: "#1E90FF" }, // A futuristic material forged in the heart of a star
+{ name: "Exo-Glass", color: "#5F9EA0" }, // A glass made for extreme environments in space
+{ name: "Celestial Ore", color: "#6A5ACD" }, // A rare ore found in the heart of a dying star
+{ name: "Time Crystal", color: "#FFFFF0" }, // A crystal with time-warping abilities
+{ name: "Hyperion Stone", color: "#8B008B" },
+      { name: "Minecraft Obsidian", color: "#3E2723" }, // Classic Minecraft block, tough and indestructible
+{ name: "Fortnite Wood", color: "#8B4513" }, // Classic Fortnite building block
+{ name: "Portal Turret", color: "#D3D3D3" }, // A Portal-inspired block, used to activate turrets
+{ name: "Terraria Stone", color: "#A9A9A9" }, // Terraria’s stone block, basic material for building
+{ name: "Half-Life Lambda Crystal", color: "#FF0000" }, // A nod to Half-Life’s Lambda symbol in a crystal form
+{ name: "Subnautica Quartz", color: "#FFD700" }, // Subnautica-inspired block that glows like quartz
+{ name: "The Legend of Zelda Bomb", color: "#FF6347" }, // A block inspired by Zelda’s bomb for explosions
+{ name: "Stardew Valley Wood", color: "#8B4513" }, // A block from Stardew Valley’s rural setting
+{ name: "Pokémon Badge", color: "#FF1493" }, // Inspired by Pokémon badges, symbolic of achievements
+{ name: "Super Mario Block", color: "#FFFF00" }, // The iconic Super Mario question mark block
+{ name: "Half-Life Metal", color: "#B0C4DE" }, // Metal plates similar to Half-Life's industrial environments
+{ name: "Redstone Dust", color: "#FF0000" }, // From Minecraft, used for crafting complex mechanisms
+{ name: "Minecraft Glowstone", color: "#FF8C00" }, // A luminous block from Minecraft
+{ name: "Overwatch Health Pack", color: "#32CD32" }, // Overwatch health pack for boosting health
+{ name: "Left 4 Dead Gas Can", color: "#FF0000" }, // A gas can from Left 4 Dead, used for explosive traps
+{ name: "Metroid Energy Tank", color: "#8B0000" }, // Metroid's energy tank for health upgrades
+{ name: "Terraria Meteorite", color: "#FF4500" }, // The Meteorite block from Terraria, useful for crafting
+{ name: "Portal Companion Cube", color: "#FFB6C1" }, // A companion cube from Portal, used for puzzles
+{ name: "Skyrim Dwemer Metal", color: "#D3D3D3" }, // A durable metal block from the Dwemer ruins in Skyrim
+{ name: "Fallout Nuka-Cola", color: "#FF6347" }, // A Nuka-Cola bottle from Fallout
+{ name: "Dark Souls Bonfire", color: "#FF4500" }, // A bonfire from Dark Souls, a central point for players
+{ name: "Minecraft Emerald Ore", color: "#50C878" }, // The rare emerald ore from Minecraft
+{ name: "BioShock Vending Machine", color: "#32CD32" }, // A vending machine from BioShock, gives items
+{ name: "Dragon Age Fade Crystal", color: "#800080" }, // A crystal from Dragon Age that holds magical energy
+{ name: "Super Mario Mushroom", color: "#FF0000" }, // A health-restoring mushroom from Super Mario
+{ name: "Minecraft Diamond Block", color: "#00BFFF" }, // Diamond block from Minecraft, ultimate material
+{ name: "Minecraft Sandstone", color: "#F4A300" }, // Sandstone block from Minecraft, used in desert builds
+{ name: "Tetris Block", color: "#FFD700" }, // Tetris’ iconic blocks, each with different shapes
+{ name: "Red Dead Redemption Wood", color: "#D2691E" }, // Wood from Red Dead Redemption for building
+{ name: "Portal Incinerator", color: "#D2691E" }, // Portal-inspired incinerator block for disposal
+{ name: "Final Fantasy Crystal", color: "#00FFFF" }, // A magical crystal from Final Fantasy
+{ name: "Minecraft Ice", color: "#ADD8E6" }, // Minecraft ice block, used for slick surfaces
+{ name: "Zelda Heart Piece", color: "#FF0000" }, // Heart Piece from Zelda, used to increase health
+{ name: "Minecraft Spawner", color: "#C71585" }, // Minecraft’s monster spawner block
+{ name: "The Witcher Rune", color: "#A9A9A9" }, // A magical rune from The Witcher
+{ name: "Fortnite Metal", color: "#D3D3D3" }, // Metal building material from Fortnite
+{ name: "Kingdom Hearts Keyblade", color: "#FFD700" }, // A Keyblade from Kingdom Hearts, a powerful tool
+{ name: "Overcooked Food", color: "#FF6347" }, // Food item from Overcooked, possibly burned
+{ name: "Minecraft Bedrock", color: "#000000" }, // The unbreakable block from Minecraft
+{ name: "Call of Duty Care Package", color: "#FFD700" }, // A supply drop from Call of Duty, loaded with items
+{ name: "Halo Energy Sword", color: "#A9A9A9" }, // Halo’s powerful energy sword, represented as a block
+{ name: "Donkey Kong Barrel", color: "#8B4513" }, // Donkey Kong-inspired explosive barrel
+{ name: "Diablo Soulstone", color: "#B22222" }, // The Soulstone from Diablo, a cursed artifact
+{ name: "The Sims Furniture", color: "#FFB6C1" }, // Furniture block inspired by The Sims
+{ name: "Minecraft Lava", color: "#FF4500" }, // Lava from Minecraft, dangerous and deadly
+{ name: "Stardew Valley Crop", color: "#228B22" }, // A crop from Stardew Valley, used for farming
+{ name: "Apex Legends Supply Bin", color: "#FF6347" }, // A supply bin from Apex Legends, full of gear
+{ name: "Animal Crossing Wood", color: "#8B4513" }, // Animal Crossing wood used for crafting
+{ name: "Spore Cell", color: "#32CD32" }, // A cell from Spore, the starting point for life
+{ name: "Minecraft Wheat", color: "#FFFF00" }, // Wheat block from Minecraft for crafting bread
+{ name: "Super Mario Fire Flower", color: "#FF4500" }, // A Fire Flower from Super Mario for power-ups
+{ name: "Undertale Ruin Block", color: "#8B0000" }, // A block from the Ruins in Undertale, part of the landscape
+{ name: "Bioshock Big Daddy", color: "#00008B" },{ name: "Fossilized Amber", color: "#FFBF00" }, // Preserved ancient resin, contains ancient life
+{ name: "Meteorite Ore", color: "#8B0000" }, // Meteorite ore, from ancient extraterrestrial impact
+{ name: "Ancient Obsidian", color: "#4B0082" }, // A rare obsidian variant formed through cosmic forces
+{ name: "Starforged Steel", color: "#C0C0C0" }, // A steel formed from ancient star dust, highly durable
+{ name: "Archaic Copper", color: "#B87333" }, // Copper with an ancient patina, used for crafting
+{ name: "Titanium Ore", color: "#A0A0A0" }, // A dense, ultra-strong ore from deep within the earth
+{ name: "Ancient Jade", color: "#00A86B" }, // A precious green stone, revered for its mystical properties
+{ name: "Vibranium", color: "#2E8B57" }, // A legendary metal known for its unique energy-absorbing qualities
+{ name: "Amber Crystal", color: "#F4A300" }, // Crystalized resin that holds ancient secrets
+{ name: "Moonstone Ore", color: "#D3D3D3" }, // Moonstone ore, used to craft powerful lunar-based items
+{ name: "Deep Earth Diamond", color: "#B9F2FF" }, // A rare form of diamond formed under intense pressure
+{ name: "Obsidian Shard", color: "#0B0B0B" }, // A sharp, jet-black shard of ancient volcanic glass
+{ name: "Meteor Crystal", color: "#FFD700" }, // A crystal from meteors, holds immense energy
+{ name: "Aetherium", color: "#DDA0DD" }, // A rare etheric metal, lighter than air and glowing with mystical energy
+{ name: "Elder Quartz", color: "#8A2BE2" }, // A crystal of extreme age, rumored to hold ancient wisdom
+{ name: "Dragonite Ore", color: "#FF4500" }, // A mineral imbued with the energy of mythical dragons
+{ name: "Mithril Ore", color: "#B0E0E6" }, // A lightweight, strong ore, often used in ancient forging
+{ name: "Volcanic Glass", color: "#D2691E" }, // Glass formed from lava flows, sharp and dangerous
+{ name: "Ancient Gold", color: "#FFD700" }, // Gold mined from ancient civilizations, rich and durable
+{ name: "Bloodstone", color: "#8B0000" }, // A deep red stone believed to hold powerful energy
+{ name: "Celestite Crystal", color: "#87CEEB" }, // A shimmering blue crystal from the heavens
+{ name: "Adamantite", color: "#A9A9A9" }, // A mythical metal of unimaginable strength, nearly indestructible
+{ name: "Eldritch Ore", color: "#6A5ACD" }, // A mysterious ore that hums with an unnatural energy
+{ name: "Platinum Ore", color: "#E5E4E2" }, // A rare, precious metal that was used by ancient civilizations
+{ name: "Soulstone", color: "#8B0000" }, // A powerful crystal used in ancient rituals and magic
+{ name: "Magma Rock", color: "#FF6347" }, // A molten, fiery rock formed from deep volcanic chambers
+{ name: "Abyssal Stone", color: "#00008B" }, // A stone that seems to absorb all light, from the depths of the earth
+{ name: "Cobalt Ore", color: "#0047AB" }, // A rare, deep blue ore used in ancient weapon crafting
+{ name: "Blood Diamond", color: "#9B111E" }, // A dangerous, red diamond with a dark history
+{ name: "Oblivion Stone", color: "#2F4F4F" }, // A dark stone, said to erase all memories of the past
+{ name: "Ancient Salt", color: "#FFF5EE" }, // A crystallized salt that dates back to the dawn of the earth
+{ name: "Lunar Ore", color: "#DCDCDC" }, // A glowing ore harvested from the moon’s surface
+{ name: "Sunstone", color: "#FF4500" }, // A brilliant stone that absorbs solar energy, glowing brightly
+{ name: "Crystalized Lava", color: "#FF8C00" }, // Lava that has cooled and solidified into sharp, glowing crystals
+{ name: "Meteor Dust", color: "#D3D3D3" }, // Powdered material from the remains of ancient meteors
+{ name: "Obsidian Glass", color: "#2F4F4F" }, // A smooth glass formed by volcanic glass
+{ name: "Soul Crystal", color: "#8B0000" }, // A crystal that holds the essence of lost souls
+{ name: "Phantom Ore", color: "#8A2BE2" }, // A rare ore that seems to disappear and reappear at will
+{ name: "Cursed Emerald", color: "#50C878" }, // A glowing green emerald said to curse those who possess it
+{ name: "Froststone", color: "#00FFFF" }, // A stone that emanates cold, often found in ancient ruins
+{ name: "Chimerite", color: "#F0F8FF" }, // A mythical metal that shifts color based on its surroundings
+{ name: "Meteorite Iron", color: "#696969" }, // Iron found in meteorite crashes, durable and rare
+{ name: "Glacier Crystal", color: "#E0FFFF" }, // A rare crystal formed within glaciers, as cold as ice
+{ name: "Volcanic Obsidian", color: "#4B0082" }, // A rich, purple-hued obsidian created from volcanic lava
+{ name: "Frozen Sapphire", color: "#1E90FF" }, // A rare sapphire, cold and magical, found only in frozen caves
+{ name: "Frostbite Ore", color: "#00BFFF" }, // An ore that glows with an icy aura, feared by adventurers
+{ name: "Nightstone", color: "#0A0A0A" }, // A stone that absorbs all light, used in dark rituals
+{ name: "Echoing Crystal", color: "#C0C0C0" }, // A rare crystal that echoes with ancient, forgotten voices
+{ name: "Crystalized Coal", color: "#2F4F4F" }, // A rare form of coal, hard and black as night
+{ name: "Dragon's Claw Ore", color: "#8B4513" }, // A rare, claw-shaped ore said to be from ancient dragons
+  { name: "Echostone", color: "#3E3A4F" }, // Emits sound waves when stepped on  
+{ name: "Bubblegel", color: "#7FD8BE" }, // Bouncy and slightly transparent  
+{ name: "Shadowbrick", color: "#1A1A1A" }, // Absorbs light, making nearby blocks darker  
+{ name: "Luminshard", color: "#E4FF74" }, // Softly glows and changes brightness over time  
+{ name: "Chronoglass", color: "#A1D6E2" }, // Warps slightly, making objects behind it look distorted  
+{ name: "Voidclay", color: "#4B0082" }, // Consumes small particles and makes them vanish  
+{ name: "Spongewood", color: "#C1A561" }, // Soaks up water and releases it slowly  
+{ name: "Cryorock", color: "#6DE1E2" }, // Freezes nearby water into ice  
+{ name: "Zapiron", color: "#D4AF37" }, // Conducts electricity and sparks when touched  
+{ name: "Nebulite", color: "#5E42A6" }, // Slightly levitates above the ground  
+{ name: "Veilstone", color: "#8B5E3C" }, // Becomes invisible when not looked at directly  
+{ name: "Shattercrystal", color: "#DDA0DD" }, // Breaks into tiny shards when hit, then reforms over time  
+{ name: "Echofoam", color: "#FFF1D6" }, // Absorbs sound, making footsteps silent  
+{ name: "Gravitite", color: "#9C89B8" }, // Makes players jump higher when standing on it  
+{ name: "Molten Cinder", color: "#A52A2A" }, // Cools into stone when exposed to water  
+{ name: "Harmonia Tile", color: "#FFC0CB" }, // Plays a soft musical note when stepped on  
+{ name: "Holo-Fiber", color: "#00FFFF" }, // Can display images or text when powered  
+{ name: "Prismdust", color: "#F5A623" }, // Scatters light into rainbow patterns  
+{ name: "Moonveil", color: "#C0C0C0" }, // Glows at night but turns gray during the day  
+{ name: "Plasma Brick", color: "#FF4500" }, // Pulses with energy and can power nearby blocks  
+{ name: "Etherwood", color: "#663399" }, // Can be walked through like a ghost  
+{ name: "Magnetite", color: "#2F4F4F" }, // Pulls metal blocks towards it  
+{ name: "Frostvine", color: "#00CED1" }, // Grows over time and spreads in cold areas  
+{ name: "Smogstone", color: "#696969" }, // Releases puffs of smoke when stepped on  
+{ name: "Warpglass", color: "#9370DB" }, // Randomly teleports objects that touch it  
+{ name: "Pyroclast", color: "#FF6347" }, // Burns continuously unless submerged in water  
+{ name: "Zephyrcloth", color: "#B0E0E6" }, // Acts as a soft landing pad for falling players  
+{ name: "Ashwood", color: "#5D4037" }, // Crumbles into dust over time unless reinforced  
+{ name: "Stormcore", color: "#4682B4" }, // Sparks with lightning during storms  
+{ name: "Coralbrick", color: "#FF7F50" }, // Changes color when submerged in water  
+{ name: "Quartzfiber", color: "#F8F8FF" }, // Amplifies light around it  
+{ name: "Hushstone", color: "#778899" }, // Cancels out noise in its radius  
+{ name: "Luminbloom", color: "#98FB98" }, // Grows tiny glowing flowers on its surface  
+{ name: "Phantom Plank", color: "#D2B48C" }, // Disappears for a few seconds when stepped on  
+{ name: "Nebular Ore", color: "#8A2BE2" }, // Occasionally emits tiny stardust particles  
+{ name: "Voidgel", color: "#000000" }, // Looks like a bottomless pit but is actually solid  
+{ name: "Solarflare", color: "#FFD700" }, // Heats up when exposed to sunlight  
+{ name: "Slimeglass", color: "#32CD32" }, // Slightly sticky, slows down movement  
+{ name: "Wispwood", color: "#FFFAF0" }, // Randomly flickers between visible and invisible  
+{ name: "Harmoniacite", color: "#E0B0FF" }, // Vibrates softly when near other harmonic blocks  
+{ name: "Frostfire Brick", color: "#87CEFA" }, // Alternates between freezing and burning nearby blocks  
+{ name: "Windcrystal", color: "#00BFFF" }, // Spins when wind or movement is detected nearby  
+{ name: "Soulstone", color: "#800080" }, // Changes color based on time of day  
+{ name: "Crystalbark", color: "#C5B1B7" }, // Crackles softly when touched and amplifies sound  
+{ name: "Blackstone Veil", color: "#3B3B3B" }, // Blocks vision, creating a foggy atmosphere around it  
+{ name: "Astralite", color: "#B0E0E6" }, // Emits a gentle cosmic glow  
+{ name: "Glowroot", color: "#7FFF00" }, // Roots that glow brighter the more they are watered  
+{ name: "Scorched Sand", color: "#DAA520" }, // Burns the ground around it, turning it to glass  
+{ name: "Magnetleaf", color: "#9ACD32" }, // Attaches to metal objects, causing them to move slightly  
+{ name: "Crystal Shade", color: "#ADD8E6" }, // Produces a calming shadow  
+{ name: "Oblivion Bark", color: "#2F4F4F" }, // Makes nearby blocks fade in and out of existence  
+{ name: "Voidslime", color: "#A9A9A9" }, // Swallows blocks into itself when touched  
+{ name: "Witchwood", color: "#4B0082" }, // Causes random magical effects to occur when near  
+{ name: "Echoey Stone", color: "#778899" }, // Amplifies sounds nearby when activated  
+{ name: "Deep Crystal", color: "#9B30FF" }, // Creates an otherworldly hum when near  
+{ name: "Blaze Orb", color: "#FF4500" }, // Burns objects nearby and leaves a trail of smoke  
+{ name: "Frostplume", color: "#00BFFF" }, // Creates icy feathers in the air when touched  
+{ name: "Glimmerstone", color: "#FFD700" }, // Shines like a beacon when activated  
+{ name: "Steamleaf", color: "#A9A9A9" }, // Releases steam when walked on  
+{ name: "Timberglass", color: "#F4A300" }, // Becomes brittle and cracks when pressure is applied  
+{ name: "Mirrorglass", color: "#B0C4DE" }, // Reflects nearby objects as distorted images  
+{ name: "Tectonic Plate", color: "#8B4513" }, // Moves slightly under pressure, shifting nearby blocks  
+{ name: "Dawnlight", color: "#F5DEB3" }, // Slowly brightens up when the sun rises  
+{ name: "Moonstone", color: "#D3D3D3" }, // Changes based on the lunar phase  
+{ name: "Tempeststone", color: "#0D98BA" }, // Creates small whirlwinds when placed outside  
+{ name: "Spiritvine", color: "#8A2BE2" }, // Creates a faint ethereal glow as it grows  
+{ name: "Foggem", color: "#BEBEBE" }, // Generates fog around it, reducing visibility  
+{ name: "Obsidian Shard", color: "#2F4F4F" }, // Extremely sharp and damages anything it touches  
+{ name: "Ironwood", color: "#D2691E" }, // Acts like metal but has a wood-like texture  
+{ name: "Aquablossom", color: "#40E0D0" }, // Grows underwater and spreads peacefully  
+{ name: "Sunflare Crystal", color: "#FF6347" }, // Absorbs sunlight and glows in darkness  
+{ name: "Rainstone", color: "#A9A9A9" }, // Produces gentle rainfall when placed in the open  
+{ name: "Tidalroot", color: "#00CED1" }, // Expands rapidly in the presence of water  
+{ name: "Infernal Powder", color: "#FF0000" }, // Creates an explosion when ignited  
+{ name: "Quicksand", color: "#E4D00A" }, // Sinks objects placed on it slowly  
+{ name: "Frostweb", color: "#B0E0E6" }, // Creates a web that slows down movement and freezes water  
+{ name: "Stormbark", color: "#808080" }, // Crackles with static electricity when near storms  
+{ name: "Eclipse Stone", color: "#A9A9A9" }, // Casts shadows that grow as the sun sets  
+{ name: "Neonroot", color: "#FF00FF" }, // Glows in bright neon colors in the dark  
+{ name: "Glimmerwood", color: "#FFD700" }, // Reflects light like polished gold  
+{ name: "Thunderstone", color: "#808080" }, // Generates thunder sounds when touched  
+{ name: "Harmonic Crystal", color: "#DDA0DD" }, // Plays soft melodies when placed nearby  
+{ name: "Solarcore", color: "#FF4500" }, // Absorbs solar energy and generates light  
+{ name: "Cloakstone", color: "#696969" }, // Disguises itself as surrounding blocks  
+{ name: "Froststeel", color: "#B0C4DE" }, // Freezes nearby water, even in hot environments  
+{ name: "Ethermoss", color: "#006400" }, // Grows and spreads across walls and floors  
+{ name: "Mirage Ore", color: "#D3D3D3" }, // Causes visual distortions when walked near  
+{ name: "Bubblesand", color: "#FF6347" }, // Creates bubbles that float upwards  
+{ name: "Nightstone", color: "#2E2E2E" }, // Absorbs darkness and radiates energy  
+{ name: "Vortexstone", color: "#4B0082" }, // Creates small tornadoes when activated  
+{ name: "Firethorn", color: "#FF5733" }, // Creates small flame bursts when touched
+{ name: "Glacierstone", color: "#A1C6EA" }, // Freezes nearby blocks into ice over time
+{ name: "Tidewood", color: "#2E8B57" }, // Swells and shrinks with water nearby
+{ name: "Lavafang", color: "#D15A0B" }, // Creates volcanic eruptions when broken
+{ name: "Dawnrock", color: "#FBBF77" }, // Glows bright orange at dawn
+{ name: "Stardust Gem", color: "#B5D9FF" }, // Emits twinkling particles that grow in number
+{ name: "Wraithsteel", color: "#8A7F7D" }, // Invisible until interacted with
+{ name: "Violetbeam", color: "#D700D3" }, // Projects beams of light that bend around it
+{ name: "Iridescent Prism", color: "#DAA6FF" }, // Reflects rainbow patterns in a small radius
+{ name: "Dreadvine", color: "#4E1D1B" }, // Creeps along surfaces and damages when touched
+{ name: "Zenith Stone", color: "#5D79B3" }, // Grows in response to player actions
+{ name: "Frostbloom", color: "#79C0E6" }, // Blooms and releases ice shards when walked on
+{ name: "Emberstone", color: "#FF7C00" }, // Flickers like a small fire but never burns
+{ name: "Mirage Leaf", color: "#A9CBB7" }, // Shimmers and warps surroundings slightly
+{ name: "Aquaflux", color: "#1D5C63" }, // Constantly flows like water but solid  
+{ name: "Thunderclay", color: "#96A1B8" }, // Creates sparks when exposed to storms  
+{ name: "Rustwood", color: "#A15B42" }, // Decays over time, turning to dust  
+{ name: "Frostflame", color: "#E71D36" }, // Alternates between freezing and burning nearby objects  
+{ name: "Dreamstone", color: "#4C5B5C" }, // Shimmers in different hues and slightly distorts vision  
+{ name: "Tearglass", color: "#B0C9F1" }, // Drips tiny droplets that vanish quickly  
+{ name: "Volcanic Brick", color: "#7B1F3F" }, // Extremely hot, burns objects placed on it  
+{ name: "Oblivion Grass", color: "#474B59" }, // Slowly drains the energy from anything nearby  
+{ name: "Prismashade", color: "#C2C2C2" }, // Projects shadows with an iridescent glow  
+{ name: "Spiritbloom", color: "#DD83F5" }, // Emits a soft hum when interacted with  
+{ name: "Nightsilk", color: "#1F2833" }, // Glows faintly with soft purple-blue light  
+{ name: "Aquafrost", color: "#B3E5FC" }, // Freezes water in place and freezes air around it  
+{ name: "Stormvine", color: "#4B8A9D" }, // Sparks with static and can cause lightning strikes nearby  
+{ name: "Shadeleaf", color: "#405D6A" }, // Creates a shadowy aura around it when nearby  
+{ name: "Glimmerroot", color: "#C3E1E9" }, // Slowly grows roots that shimmer in low light  
+{ name: "Cinderspark", color: "#F2A3A0" }, // Creates sparks that turn into floating embers  
+{ name: "Zephyros", color: "#70C4F3" }, // Produces light gusts of wind, blowing nearby items  
+{ name: "Tectonicstone", color: "#9F7136" }, // Causes tremors and slight shaking when disturbed  
+{ name: "Vaporwood", color: "#BDC2B7" }, // Emits mist-like vapor when touched  
+{ name: "Crystallite", color: "#99C9A4" }, // Shifts through different pastel shades continuously  
+{ name: "Blackmist", color: "#141E28" }, // Creates an ethereal mist that hides nearby objects  
+{ name: "Volticstone", color: "#D3B04C" }, // Charges nearby blocks with static energy  
+{ name: "Riftwood", color: "#1C2321" }, // Distorts the nearby air, making things appear slightly off  
+{ name: "Firebloom", color: "#F28C28" }, // Releases small fire bursts when touched  
+{ name: "Glitterglass", color: "#FFDCE0" }, // Reflects sparkles and shines brightly in the sun  
+{ name: "Emberbark", color: "#6E2C34" }, // Releases small embers when brushed against  
+{ name: "Moonstone", color: "#F5F5F5" }, // Glows in the moonlight, casting a calming glow  
+{ name: "Embercoil", color: "#FF6600" }, // Burns nearby materials when activated  
+{ name: "Ashmoss", color: "#B9B8A3" }, // Grows black moss that produces faint heat  
+{ name: "Voidweb", color: "#010101" }, // Completely black, distorts space slightly  
+{ name: "Frostvine", color: "#B6DAE3" }, // Grows along surfaces, freezing them slowly  
+{ name: "Tidalstone", color: "#006994" }, // Sends small waves of water across the surface  
+{ name: "Crystalheart", color: "#FF6699" }, // Radiates soft pulses of energy  
+{ name: "Luxwood", color: "#F0F2C2" }, // Radiates soft, constant light  
+{ name: "Dewdrop", color: "#A8D4E0" }, // Creates soft dew when placed outdoors  
+{ name: "Magmacoil", color: "#FF2A00" }, // Releases magma bursts when in motion  
+{ name: "Nightshade", color: "#5B2C6F" }, // Only visible in darkness, almost invisible otherwise  
+{ name: "Glacialroot", color: "#D1F1FF" }, // Freezes surrounding blocks and creates cold air  
+{ name: "Glimmerstone", color: "#BCE2A1" }, // Shimmers and softly pulses when placed in direct light  
+{ name: "Vortexglass", color: "#2B75A8" }, // Spins objects around it, creating a vortex effect  
+{ name: "Soulgem", color: "#6B238E" }, // Glows intensely when in proximity to other magic blocks  
+{ name: "Shardleaf", color: "#52994B" }, // Leaves jagged shards that stick to nearby surfaces  
+{ name: "Nebulite", color: "#817B8C" }, // Shifts between dark and light as time passes  
+{ name: "Blazecrystal", color: "#FF3D00" }, // Releases heat waves when in the presence of flames  
+{ name: "Spectralwood", color: "#7E7C7A" }, // Flickers like a fading ghost in the dark  
+{ name: "Glowvine", color: "#77F8A1" }, // Grows with light intensity, glowing brightly  
+{ name: "Mistralstone", color: "#B5D8B5" }, // Creates a gentle breeze when touched  
+{ name: "Flamecore", color: "#F07120" }, // Sends bursts of fire towards the nearest block  
+{ name: "Echoing Ore", color: "#6B4C4C" }, // Sends vibrations and echoes through the nearby area  
+{ name: "Pyrowood", color: "#F5A14A" }, // Slowly combusts but doesn't burn itself  
+{ name: "Shroudbloom", color: "#4F6371" }, // Cloaks the area in shadows when nearby  
+{ name: "Aetherstone", color: "#8AC4D0" }, // Glows faintly and creates a calming atmosphere  
+{ name: "Violetshade", color: "#7A2AA2" }, // Sends out purple waves that distort nearby air  
+{ name: "Glacierwood", color: "#8FD7F9" }, // Freezes anything near it into solid ice  
+{ name: "Inferno Stone", color: "#9F1C40" }, // Generates random bursts of flame when interacted with  
+{ name: "Starlight Crystal", color: "#C6C8FF" }, // Collects and releases starry light particles  
+{ name: "Zephyros", color: "#9ACD32" }, // Small wind bursts flow around it  
+{ name: "Viralroot", color: "#5C6342" }, // Grows faster and spreads randomly around the world  
+{ name: "Crimsonshade", color: "#BE1E2D" }, // Gives a red hue to the world nearby, enhancing dark vibes  
+{ name: "Miststone", color: "#A3A9B2" }, // Slowly generates mist that clouds vision  
+{ name: "Prismwood", color: "#F8D1A0" }, // Displays rainbows across surfaces when placed outdoors
+{ name: "Cookie Dough", color: "#E8D8B3" }, // Appears like dough, can be baked into cookies
+{ name: "Baked Cookie", color: "#D5A24C" }, // A soft, warm cookie block that can be eaten in-game
+{ name: "Chocolate Chip", color: "#6F4F1A" }, // A cookie with chocolate chips embedded in it
+{ name: "Sugar Frost", color: "#F8F8F8" }, // A frosted, sugary cookie that glimmers in light
+{ name: "Oatmeal Cookie", color: "#D2B48C" }, // Crumbly texture, looks like an oatmeal cookie
+{ name: "Crumbled Cookie", color: "#E4D7B9" }, // Broken pieces of a cookie that can be scattered
+{ name: "ChocoMilk", color: "#3B2F2A" }, // Dark chocolate milk block, used for crafting or drinking
+{ name: "Cookie Crumb", color: "#E1D5B9" }, // Crumbs left behind from cookies
+{ name: "Gingerbread", color: "#D1713C" }, // A gingerbread cookie block with a festive vibe
+{ name: "Frosted Cake", color: "#FFFBF3" }, // Looks like a block of frosted cake, sweet and soft
+{ name: "Caramel Swirl", color: "#C48E3B" }, // Sticky caramel that glistens and can be used for crafting
+{ name: "Peanut Butter Swirl", color: "#8B6D4B" }, // Peanut butter infused block with a creamy texture
+{ name: "Brownie Crumble", color: "#6B3E29" }, // A brownie-like block that crumbles when touched
+{ name: "ChocoFudge", color: "#381B23" }, // Dark chocolate fudge that can melt into a gooey texture
+{ name: "Candy Sprinkle", color: "#F4C2C2" }, // Brightly colored sprinkles that add texture
+{ name: "Marshmallow", color: "#F7F4D8" }, // A soft, squishy marshmallow block to use in recipes
+{ name: "Shortbread", color: "#F1E0B1" }, // A crunchy shortbread cookie block
+{ name: "Macaron", color: "#F5A7D5" }, // French-style macaron block, soft and colorful
+{ name: "Choco Chip Dough", color: "#C4A97B" }, // Cookie dough with chocolate chips ready for baking
+{ name: "Lemon Tart", color: "#F1D553" }, // Tangy and delicious tart block with a lemony yellow color
+{ name: "Coconut Snowball", color: "#D3E3E4" }, // A white coconut snowball block that rolls when placed
+{ name: "Vanilla Wafer", color: "#F7F1C8" }, // Thin vanilla wafer blocks that break into smaller pieces
+{ name: "Apple Pie", color: "#9A6F48" }, // A classic pie block with warm apple filling visible
+{ name: "Pumpkin Pie", color: "#F1A31D" }, // A pumpkin pie block with an orange glow
+{ name: "Candy Cane", color: "#E60000" }, // Red and white striped candy cane block for decoration
+{ name: "Maple Syrup", color: "#9E6A3C" }, // Sweet, sticky maple syrup dripping down
+{ name: "Cinnamon Roll", color: "#C9826A" }, // A spiral cinnamon roll block with a sugary glaze
+{ name: "Hot Cocoa", color: "#3B2A2B" }, // A warm, inviting hot cocoa block with marshmallows
+{ name: "Banana Bread", color: "#D4A40B" }, // A soft, golden banana bread block with brown streaks
+{ name: "Berry Muffin", color: "#C62B35" }, // Berry-filled muffin block with red and purple tones
+{ name: "Honeycomb", color: "#F4C200" }, // Hexagonal honeycomb block, sweet and sticky
+{ name: "Marzipan", color: "#F1C8A6" }, // A sweet almond paste block, soft and moldable
+{ name: "Carrot Cake", color: "#F3A02F" }, // A moist carrot cake block with nuts and frosting
+{ name: "Cheesecake", color: "#F2F4D5" }, // A rich and creamy cheesecake block with a light texture
+{ name: "Molasses Cookie", color: "#8F5933" }, // Dark, chewy molasses cookie block
+{ name: "Fruit Tart", color: "#D04F31" }, // Colorful fruit tart block with berries on top
+{ name: "Toffee Crunch", color: "#8B5B3B" }, // A crunchy, sweet toffee block with caramel flavors
+{ name: "Red Velvet Cake", color: "#9B2D30" }, // A rich, deep red velvet cake block with frosting
+{ name: "S'mores", color: "#F5C76E" }, // S'mores block made of chocolate and marshmallow layers
+{ name: "Lemonade", color: "#F7D94B" }, // Sweet lemonade block that refreshes when near water
+{ name: "Fudge Brownie", color: "#5D3F2B" }, // A dense, fudgy brownie block with chunks of chocolate
+{ name: "Raspberry Tart", color: "#B42125" }, // A tart raspberry dessert block with vibrant red hues
+{ name: "Chocolate Eclair", color: "#704C28" }, // An éclair block filled with cream and chocolate glaze
+{ name: "Fruit Cup", color: "#D87130" }, // A colorful fruit salad block with various fruits inside
+{ name: "Lemon Meringue", color: "#F7F2A0" }, // A light, fluffy lemon meringue pie block
+{ name: "Tiramisu", color: "#B18973" }, // A layered tiramisu block with espresso and cream
+{ name: "Coconut Macaron", color: "#F1E6D5" }, // A coconut-filled macaron block
+{ name: "Pineapple Upside Down", color: "#E8971F" }, // A warm, fruity upside-down cake block with pineapple topping
+{ name: "Ice Cream Sandwich", color: "#E2E4E5" }, // A chilled ice cream sandwich block, perfect for hot weather
+{ name: "Pumpkin Spice", color: "#B36B20" }, // Spicy pumpkin-flavored dessert block
+{ name: "Mango Sorbet", color: "#F3D24A" }, // A refreshing, fruity sorbet block
+{ name: "Apple Cider Donut", color: "#B87045" }, // A warm donut block with apple cider flavor
+{ name: "Peach Cobbler", color: "#FFB58A" }, // A soft, cobbler block made of peaches and crispy topping
+{ name: "Sundae", color: "#F9E3D0" }, // Ice cream sundae block with sprinkles and syrup
+{ name: "Churro", color: "#D9A054" }, // A warm, sugary churro block with a crispy texture
+{ name: "Baklava", color: "#D6A15C" }, // A rich, flaky baklava block with honey and nuts
+{ name: "Candy Apple", color: "#E74C3C" }, // A shiny, sweet candy-coated apple block
+{ name: "Coconut Cream Pie", color: "#F2B19A" }, // A creamy coconut pie block with a delicate texture
+{ name: "Pizza Slice", color: "#F4A300" }, // A cheesy pizza slice with pepperoni and toppings
+{ name: "Hot Dog", color: "#F7A77E" }, // A warm hot dog with a juicy sausage
+{ name: "Burger Patty", color: "#6F4F1A" }, // A fresh burger patty, grilled to perfection
+{ name: "French Fries", color: "#FFD700" }, // Crispy and golden French fries, a fast food classic
+{ name: "Spaghetti", color: "#F4D03F" }, // A tangle of pasta with marinara sauce
+{ name: "Taco", color: "#E76F3D" }, // A crunchy taco shell filled with savory toppings
+{ name: "Donut", color: "#F9CBB0" }, // A glazed donut with sprinkles
+{ name: "Nachos", color: "#FF9933" }, // A plate of nachos with melted cheese and jalapeños
+{ name: "Sushi Roll", color: "#A6D1B6" }, // A sushi roll with salmon and rice
+{ name: "Steak", color: "#8B5A2B" }, // A thick, juicy steak served hot
+{ name: "Roast Chicken", color: "#D67E2B" }, // A perfectly roasted chicken block
+{ name: "Ice Cream Cone", color: "#F8C1B2" }, // A cone with a scoop of vanilla ice cream on top
+{ name: "Fried Chicken", color: "#F1C232" }, // Crispy, golden fried chicken
+{ name: "Mashed Potatoes", color: "#D4B9A4" }, // A fluffy mashed potato block
+{ name: "Corn on the Cob", color: "#E4C200" }, // A bright yellow corn on the cob block
+{ name: "Chocolate Bar", color: "#6E4F35" }, // A solid chocolate bar, delicious and sweet
+{ name: "Chili Bowl", color: "#A52A2A" }, // A hearty bowl of chili with beans
+{ name: "Lemon Slice", color: "#FFCC00" }, // A tangy lemon slice, perfect for garnishing
+{ name: "Popcorn", color: "#FFFFE0" }, // A fluffy popcorn block, crunchy and buttery
+{ name: "Cake Slice", color: "#F3E4D5" }, // A delicious slice of cake with frosting
+{ name: "Smoothie", color: "#FF7F50" }, // A refreshing fruit smoothie block
+{ name: "Fruit Bowl", color: "#8B4513" }, // A bowl filled with colorful fruits
+{ name: "Wooden Chair", color: "#8B4513" }, // A simple, sturdy wooden chair
+{ name: "Cushioned Sofa", color: "#D1A78E" }, // A soft, plush sofa perfect for relaxing
+{ name: "Coffee Table", color: "#A66D45" }, // A sleek wooden coffee table to complement any living room
+{ name: "Bookshelf", color: "#4E3629" }, // A bookshelf full of books, great for reading corners
+{ name: "Lamp", color: "#F4E1C1" }, // A standing lamp with a soft glow
+{ name: "Dining Table", color: "#B47D58" }, // A large wooden table, perfect for family meals
+{ name: "Armchair", color: "#C0C0C0" }, // A comfortable armchair for lounging
+{ name: "Side Table", color: "#8A6E5A" }, // A small, neat side table to complement furniture
+{ name: "Desk", color: "#4F3B2F" }, // A solid wooden desk for work or study
+{ name: "Pillow", color: "#F0E5D8" }, // A fluffy pillow, soft and decorative
+{ name: "Refrigerator", color: "#D3D3D3" }, // A modern fridge block, essential for storing food
+{ name: "Bed", color: "#A19D9A" }, // A cozy bed to rest on
+{ name: "Wardrobe", color: "#8B5D3D" }, // A stylish wardrobe to store clothes
+{ name: "Couch", color: "#D18F69" }, // A comfortable couch with cushions
+{ name: "Coffee Machine", color: "#7D6E4F" }, // A coffee machine for making hot drinks
+{ name: "Trash Can", color: "#696969" }, // A trash can to dispose of unwanted items
+{ name: "Kitchen Sink", color: "#A1B6C0" }, // A clean sink block, useful in the kitchen
+{ name: "Towel Rack", color: "#D3B88C" }, // A rack for hanging towels in the bathroom
+{ name: "Shower", color: "#C4D3D4" }, // A shower block with cascading water
+{ name: "Toilet", color: "#FFFFFF" }, // A clean, white toilet block
+{ name: "Flower Pot", color: "#9F9F9F" }, // A decorative flower pot with blooming flowers
+{ name: "Wall Clock", color: "#F0F0F0" }, // A simple clock to hang on the wall
+{ name: "Fridge Magnet", color: "#F1C27D" }, // A colorful fridge magnet to decorate your fridge
+{ name: "Mirror", color: "#D1D1D1" }, // A mirror block that reflects light
+{ name: "Shaggy Carpet", color: "#8B6D2A" }, // A fuzzy, shaggy carpet for the floor
+{ name: "Vase", color: "#D9C4A4" }, // A decorative vase to hold flowers
+{ name: "Curtains", color: "#C5A8A0" }, // Flowing curtains that add elegance to a room
+{ name: "Cracked Wall", color: "#B4A69C" }, // A slightly cracked wall, looks old and worn
+{ name: "Old Newspaper", color: "#D4D2C4" }, // A crumpled-up newspaper block, faded with time
+{ name: "Rusty Pipe", color: "#7F7F7F" }, // A weathered, rusty pipe with jagged edges
+{ name: "Water Stain", color: "#A6A9B6" }, // A water stain that spreads across surfaces
+{ name: "Cobweb", color: "#BEBEBE" }, // A dusty cobweb hanging in corners
+{ name: "Trash Pile", color: "#8E7F7F" }, // A pile of random, discarded trash
+{ name: "Broken Glass", color: "#A9A9A9" }, // Shattered glass scattered on the floor
+{ name: "Empty Cup", color: "#E0D2B6" }, // A used coffee cup, with a few crumbs left
+{ name: "Ripped Poster", color: "#CEB9A8" }, // A torn poster hanging half off a wall
+{ name: "Faded Sign", color: "#D8D8D8" }, // A sign that is barely readable due to fading
+{ name: "Chipped Plate", color: "#A8A9B6" }, // A cracked and chipped dinner plate
+{ name: "Burnt Paper", color: "#4E4A42" }, // A piece of paper with singed edges
+{ name: "Moldy Bread", color: "#B39B6A" }, // Bread covered with greenish mold
+{ name: "Crumpled Tissue", color: "#F0D8D2" }, // A tissue that’s been thrown away and wrinkled
+{ name: "Dull Lightbulb", color: "#E4D5D5" }, // A lightbulb that's dim and almost burnt out
+{ name: "Scratched CD", color: "#D1D1D1" }, // A CD with visible scratches, no longer usable
+{ name: "Burnt Toast", color: "#7C4F27" }, // A piece of toast burnt beyond recognition
+{ name: "Empty Bottle", color: "#B6A69F" }, // A used bottle with nothing left inside
+{ name: "Worn Shoe", color: "#C9A17B" }, // A single worn-out shoe, broken and dirty
+{ name: "Soda Can", color: "#8B5A3D" }, // An empty soda can, crushed and tossed aside
+{ name: "Cracked Mirror", color: "#D4C9B1" }, // A mirror with cracks spidering across
+{ name: "Spilled Ink", color: "#2F2A2A" }, // A pool of black ink, just spilled onto the surface
+{ name: "Fallen Leaf", color: "#7D4F1A" }, // A dry, withered leaf on the ground
+{ name: "Dried Mud", color: "#8B6E4D" }, // A patch of mud that's hardened and cracked
+{ name: "Stale Cracker", color: "#F1D6A0" }, // A stale cracker, dry and unappetizing
+{ name: "Dusty Shelf", color: "#E1D7C6" }, // A shelf covered in a thin layer of dust
+{ name: "Dirty Sock", color: "#B1A39E" }, // A single, dirty sock lying on the ground
+{ name: "Old Shoe Lace", color: "#6B4F2B" }, // A single old and worn shoelace
+{ name: "Loose Button", color: "#9E9E9E" }, // A button that’s fallen off, no longer in place
+{ name: "Rotten Banana", color: "#B4B0A4" }, // A banana turned brown and unfit to eat
+{ name: "Worn Rug", color: "#A4825A" }, // A carpet that’s seen better days, worn and dirty
+{ name: "Chipped Mug", color: "#A9A9A9" }, // A mug with a chip in the side
+{ name: "Wasted Paint Can", color: "#6C5B43" }, // An old paint can with a dried-up residue inside
+{ name: "Broken Umbrella", color: "#A1A1A1" }, // A bent umbrella with a snapped rib
+{ name: "Dead Plant", color: "#6B6B6B" }, // A sad, wilted plant that's no longer alive
+{ name: "Burnt Matches", color: "#6E4A1F" }, // A matchstick with a burnt-out head
+{ name: "Smashed Phone", color: "#B7B7B7" }, // A broken phone with a cracked screen
+{ name: "Forgotten Book", color: "#A19B91" }, // An old book, forgotten on a shelf
+{ name: "Discarded Ticket", color: "#F5D58A" }, // A discarded ticket, torn and useless
+{ name: "Cracked Bowl", color: "#C4A49B" }, // A bowl that's lost its shape from cracking
+{ name: "Empty Frame", color: "#D0C9A7" }, // A frame without a picture, just the border
+{ name: "Leaky Faucet", color: "#9F9F9F" }, // A faucet dripping small amounts of water
+{ name: "Stained Carpet", color: "#B6B6B6" }, // A carpet with an old stain that's never cleaned
+{ name: "Wet Floor", color: "#A3A3A3" }, // A patch of floor still wet from a spill
+{ name: "Forgotten Shoe", color: "#4B3621" }, // A lone shoe left behind in the hallway
+{ name: "Crumpled Paper Bag", color: "#B6A786" }, // A paper bag that’s been stuffed and crumpled
+{ name: "Torn Jacket", color: "#8E8E8E" }, // A jacket with a large tear in it
+{ name: "Leaky Ceiling", color: "#C0C0C0" }, // A ceiling with a visible water leak
+{ name: "Broken Window", color: "#A6A6A6" }, // A window that’s shattered, letting in the wind
+{ name: "Melted Candle", color: "#F1E1C1" }, // A candle that's melted down into a pool of wax
+{ name: "Forgotten Sandwich", color: "#D0A97E" }, // A forgotten sandwich, half-eaten and stale
+{ name: "Old Key", color: "#A8A8A8" }, // An old, rusty key with a few dents
+{ name: "Rusty Nail", color: "#6B4F30" }, // A nail that's rusted and no longer sharp
+{ name: "Scuffed Basketball", color: "#D67F3E" }, // A scuffed basketball that’s been used too much
+{ name: "Expired Milk", color: "#D0D0D0" }, // A carton of milk that's past its expiry date
+{ name: "Plastic Fork", color: "#E0E0E0" }, // A single plastic fork, snapped in half
+{ name: "Worn T-shirt", color: "#9D8B76" }, // A T-shirt that's been worn out and faded
+{ name: "Broken Television", color: "#B3B3B3" }, // A TV with a cracked screen, no longer working
+{ name: "Discolored Tiles", color: "#D9D9D9" }, // Tiles that have faded and discolored over time
+{ name: "Fallen Branch", color: "#7A4E2C" }, // A branch that's fallen off a tree, dried out
+{ name: "Crushed Paper", color: "#E3D2B5" }, // A crumpled paper ball that has been thrown away
+{ name: "Soggy Biscuit", color: "#9F7C52" }, // A biscuit that's become soggy and mushy
+{ name: "Bright Graffiti", color: "#FF6347" }, // Bright orange-red graffiti
+{ name: "Electric Blue Light", color: "#1E90FF" }, // A vivid blue light
+{ name: "Neon Pink Sign", color: "#FF1493" }, // A neon pink glowing sign
+{ name: "Candy Wrapper", color: "#FF69B4" }, // Bright pink, vibrant wrapper
+{ name: "Lemonade Stand", color: "#FFF700" }, // Bright yellow stand, cheerful vibes
+{ name: "Soda Pop", color: "#00BFFF" }, // Bright blue soda, refreshing
+{ name: "Lime Slice", color: "#32CD32" }, // Vibrant lime green slice
+{ name: "Fluorescent Green", color: "#00FF00" }, // A glowing green color
+{ name: "Bright Orange Crate", color: "#FFA500" }, // A bold orange crate
+{ name: "Pink Candy Cane", color: "#FF69B4" }, // Bold pink candy cane for decoration
+{ name: "Sunset Sky", color: "#FF4500" }, // A rich sunset orange with red hues
+{ name: "Tropical Fruit", color: "#FFD700" }, // Bright yellow, like ripe fruit
+{ name: "Purple Balloon", color: "#800080" }, // Vibrant purple balloon floating
+{ name: "Golden Trophy", color: "#FFD700" }, // A trophy that's gleaming gold
+{ name: "Magenta Flower", color: "#FF00FF" }, // Bright magenta blooming flower
+{ name: "Electric Purple", color: "#8A2BE2" }, // Vibrant electric purple
+{ name: "Firecracker", color: "#FF0000" }, // Bright red, like a firecracker
+{ name: "Neon Green Lantern", color: "#39FF14" }, // A neon green glowing lantern
+{ name: "Turquoise Gem", color: "#40E0D0" }, // Beautiful turquoise color gem
+{ name: "Bright Coral", color: "#FF7F50" }, // Coral with a lively orange hue
+{ name: "Vibrant Ruby", color: "#9B111E" }, // A ruby-red block, rich in color
+{ name: "Candy Apple", color: "#F40000" }, // Vibrant red, like a caramel-coated apple
+{ name: "Electric Yellow", color: "#FFFF00" }, // Bold and neon yellow
+{ name: "Vivid Teal", color: "#008080" }, // Strong and vivid teal color
+{ name: "Bright Aqua", color: "#00FFFF" }, // Vibrant and glowing aqua blue
+{ name: "Frosted Pink", color: "#FFB6C1" }, // Frosted pastel pink with a light glow
+{ name: "Sky Blue Clouds", color: "#87CEFA" }, // Soft and fluffy sky blue cloud
+{ name: "Vibrant Lemon", color: "#FFF700" }, // Vibrant, bright yellow lemon slice
+{ name: "Electric Violet", color: "#9400D3" }, // Strong and bold electric violet
+{ name: "Bright Turquoise", color: "#30D5C8" }, // Vibrant turquoise blue with a hint of green
+{ name: "Neon Red", color: "#FF0800" }, // Bright neon red, eye-catching
+{ name: "Lime Popsicle", color: "#B2FF59" }, // Refreshing lime popsicle green
+{ name: "Purple Orchid", color: "#DA70D6" }, // Bright and lively orchid purple
+{ name: "Hot Pink Pillow", color: "#FF69B4" }, // A hot pink pillow for decoration
+{ name: "Orange Blossom", color: "#FFA07A" }, // Soft but vibrant orange color
+{ name: "Bright Raspberry", color: "#E30B5C" }, // Raspberry red with an intense pop
+{ name: "Golden Banana", color: "#FFEC40" }, // Golden, ripe banana yellow color
+{ name: "Neon Blue", color: "#0000FF" }, // Neon, glowing blue block
+{ name: "Pastel Purple", color: "#B39DDB" }, // Soft pastel purple with a gentle feel
+{ name: "Neon Orange", color: "#FF6A00" }, // A glowing neon orange hue
+{ name: "Bright Magenta", color: "#D500F9" }, // A bright, bold magenta color
+{ name: "Lush Green", color: "#228B22" }, // Rich, deep green like fresh leaves
+{ name: "Citrus Orange", color: "#FF8C00" }, // Bold, bright citrus-orange hue
+{ name: "Sunflower Yellow", color: "#FFDA03" }, // Radiant sunflower yellow color
+{ name: "Shocking Pink", color: "#FC0FC0" }, // Intense shocking pink for a burst of color
+{ name: "Bright Mint", color: "#98FF98" }, // Light mint green with a vibrant touch
+{ name: "Sea Breeze", color: "#00FA9A" }, // Fresh sea breeze greenish-blue
+{ name: "Bubblegum Pink", color: "#F8A0FF" }, // Soft bubblegum pink, playful and sweet
+{ name: "Lime Green Splash", color: "#00FF00" }, // A vivid lime green splash
+{ name: "Ruby Red", color: "#9B111E" }, // Deep and vibrant ruby red
+{ name: "Bright Fuchsia", color: "#FF00FF" }, // Vibrant fuchsia with a touch of pink
+{ name: "Candy Corn", color: "#FFBF00" }, // Bold orange and yellow candy corn color
+{ name: "Popsicle Blue", color: "#87CEEB" }, // A light popsicle blue block
+{ name: "Lava Flow", color: "#FF4500" }, // Lava-like bright orange-red with streaks
+{ name: "Cerulean Blue", color: "#007BA7" }, // Cerulean, bright and rich blue
+{ name: "Sparkling Silver", color: "#C0C0C0" }, // A sparkling silver hue for shine
+{ name: "Mint Green", color: "#98FF98" }, // Fresh, minty green with a lively tone
+{ name: "Sunset Peach", color: "#FFDAB9" }, // Soft and warm peachy sunset color
+{ name: "Electric Pink", color: "#FF1493" }, // Bright neon electric pink
+{ name: "Lime Punch", color: "#B7FF7B" }, // A refreshing, lime-colored punch
+{ name: "Pink Lemonade", color: "#FFB6C1" }, // A gentle and refreshing pink lemonade hue
+{ name: "Glowing Lavender", color: "#E6A8D7" }, // Soft glowing lavender shade
+{ name: "Turquoise Glow", color: "#40E0D0" }, // Vibrant turquoise glowing block
+{ name: "Neon Coral", color: "#FF6347" }, // A radiant coral hue, glowing neon
+{ name: "Dusty Rose", color: "#D4A0A7" }, // A muted pink, soft and gentle
+{ name: "Vintage Purple", color: "#6A4C9C" }, // A calm but vibrant purple shade
+{ name: "Muted Teal", color: "#4D708E" }, // A faded, cool teal
+{ name: "Misty Blue", color: "#A8D0E6" }, // A soft, muted sky blue
+{ name: "Soft Lavender", color: "#D8B9D2" }, // Light, dusty lavender
+{ name: "Burnt Amber", color: "#9E5B3D" }, // A muted amber with earthy tones
+{ name: "Muted Peach", color: "#F4A6A0" }, // A soft and subdued peach color
+{ name: "Hazy Lemon", color: "#F7E69B" }, // A dull lemon yellow, subtle and calm
+{ name: "Warm Cocoa", color: "#8E735B" }, // A warm, earthy cocoa brown
+{ name: "Stormy Grey", color: "#7A7F7E" }, // A deep grey with a blue tint
+{ name: "Dusty Plum", color: "#8E4D70" }, // A muted, vintage plum color
+{ name: "Breezy Mint", color: "#7EC8B6" }, // A soft mint green with cool tones
+{ name: "Smoky Quartz", color: "#B4A6A0" }, // A greyish, smoky quartz color
+{ name: "Faded Coral", color: "#FF6F61" }, // A pastel coral with a dusty feel
+{ name: "Pale Aqua", color: "#A2D8D1" }, // A pale, soft aqua color
+{ name: "Burnt Sienna", color: "#E97451" }, // A rustic and subdued orange-brown
+{ name: "Ashen Brown", color: "#B29F96" }, // A dull brown with a greyish hint
+{ name: "Soft Periwinkle", color: "#8E82D4" }, // A pale purple with a hint of blue
+{ name: "Pale Olive", color: "#B5B276" }, // A soft, muted olive green
+{ name: "Frosted Lavender", color: "#C9A6D7" }, // Light lavender with frosty tones
+{ name: "Peachy Taupe", color: "#C7A99A" }, // A muted peach and taupe blend
+{ name: "Dried Rose", color: "#B88A8A" }, // A dusty, faded rose color
+{ name: "Storm Cloud", color: "#A6B1B7" }, // Soft grey-blue like a stormy sky
+{ name: "Pale Mango", color: "#F1B98A" }, // A light, faded mango color
+{ name: "Muted Sapphire", color: "#5D5F7E" }, // A calm, subdued sapphire blue
+{ name: "Cloudy Sky", color: "#B8C4D6" }, // A soft cloudy blue
+{ name: "Baked Clay", color: "#E1A87D" }, // A muted, warm clay brown
+{ name: "Soft Sand", color: "#D9C7A1" }, // A faded sand-like beige
+{ name: "Chalky Pink", color: "#F4B5B5" }, // A light, chalky pink color
+{ name: "Foggy Gray", color: "#D1D3D4" }, // A soft, foggy grey
+{ name: "Lavender Mist", color: "#A6A0C5" }, // A muted lavender mist color
+{ name: "Olive Branch", color: "#A7A85C" }, // A muted olive green with yellow undertones
+{ name: "Blush Beige", color: "#E9B8B1" }, // A soft, blush beige
+{ name: "Muted Maroon", color: "#6F2C2B" }, // A subdued maroon color with earthy tones
+{ name: "Stormy Green", color: "#2E6A47" }, // A muted stormy green color
+{ name: "Dandelion Fade", color: "#F1E29D" }, // A faded yellow with a soft dandelion look
+
+// Kawaii Blocks:
+{ name: "Cotton Candy", color: "#F7A7D5" }, // Soft pink and candy-like
+{ name: "Blueberry Fluff", color: "#9C95E3" }, // A pastel lavender-blue fluff
+{ name: "Strawberry Cream", color: "#F1A3C1" }, // Soft pink and creamy strawberry
+{ name: "Cinnamon Roll", color: "#D88B4F" }, // A warm, cinnamon roll brown
+{ name: "Honey Drizzle", color: "#E4C85C" }, // A soft honey yellow
+{ name: "Marshmallow Puff", color: "#F1E6D7" }, // A soft, marshmallow white
+{ name: "Mint Chip", color: "#B7E4C7" }, // Soft mint green with a touch of sweetness
+{ name: "Pink Cupcake", color: "#F0A6CA" }, // Sweet pastel pink cupcake color
+{ name: "Blueberry Pie", color: "#6A80B0" }, // A blueberry pie blue with a soft purple tint
+{ name: "Gingerbread Cookie", color: "#B87F3A" }, // A warm gingerbread brown
+{ name: "Peach Sorbet", color: "#F7A8B7" }, // Soft peachy pink, like sorbet
+{ name: "Candy Apple", color: "#D63D00" }, // A sweet, candy apple red
+{ name: "Bubblegum Dreams", color: "#F8A6C1" }, // A soft, bubblegum pink
+{ name: "Sugar Plum", color: "#B2649E" }, // Soft purple and pink sugar plum mix
+{ name: "Lemon Meringue", color: "#FFF7B2" }, // A soft, pastel lemon meringue yellow
+{ name: "Caramel Drip", color: "#D19C5B" }, // Sweet caramel color with a warm feel
+{ name: "Pistachio Milkshake", color: "#A8E0B5" }, // Soft pistachio green, dreamy
+{ name: "Lavender Sundae", color: "#BDA6D3" }, // Light lavender like a sweet sundae
+{ name: "Raspberry Swirl", color: "#E30062" }, // Sweet raspberry color with a bold tone
+{ name: "Peach Melba", color: "#F1B8A6" }, // Soft peach with a hint of red, like a dessert
+{ name: "Cotton Candy Swirl", color: "#FFB6D4" }, // Sweet cotton candy pink and blue mix
+{ name: "Buttercream Yellow", color: "#FFF6A6" }, // A soft, sweet buttercream yellow
+{ name: "Lime Popsicle", color: "#A1FF75" }, // Bright lime green like a popsicle
+{ name: "Sugar Cookie", color: "#F2E1C1" }, // Light, sweet sugar cookie color
+{ name: "Pineapple Whip", color: "#F6D84F" }, // Bright yellow with a tropical twist
+{ name: "Concrete Jungle", color: "#9E9E9E" }, // Urban concrete grey, modern city look
+{ name: "Urban Asphalt", color: "#4C4C4C" }, // Dark grey asphalt street block
+{ name: "Neon Sign", color: "#F8B800" }, // Bright neon yellow for city lights
+{ name: "Steel Frame", color: "#717D8C" }, // Metallic steel gray with a cool shine
+{ name: "Brick Wall", color: "#B94D3C" }, // Red bricks, classic city building material
+{ name: "Street Lamp", color: "#F1C27D" }, // Soft yellowish light like streetlamps
+{ name: "Metal Grid", color: "#4D4D4D" }, // Industrial city grid-like metal surface
+{ name: "City Pavement", color: "#A6A6A6" }, // Pavement with a smooth, grey finish
+{ name: "Glass Window", color: "#5E8E9F" }, // Semi-transparent light blue for windows
+{ name: "Elevator Door", color: "#8B8B8B" }, // Sleek metallic elevator doors
+{ name: "Parking Lot", color: "#8D8D8D" }, // Grey, urban parking lot surface
+{ name: "Bus Stop Shelter", color: "#C0C0C0" }, // Light, neutral shade like a bus shelter
+{ name: "Retro Vinyl", color: "#D5B29B" }, // Faded, warm beige like old vinyl records
+{ name: "Polaroid Frame", color: "#F0F0F0" }, // Light pastel beige, vintage Polaroid
+{ name: "Worn Carpet", color: "#C1A58D" }, // Faded carpet with nostalgic vibes
+{ name: "Old TV Screen", color: "#A8A8A8" }, // Greyish tone for vintage TV screens
+{ name: "Wooden Desk", color: "#6D4F3F" }, // Nostalgic brown wooden desk surface
+{ name: "Cassette Tape", color: "#B9B9B9" }, // Retro grey with faded metallic edges
+{ name: "Radio Dial", color: "#8C6E50" }, // Vintage radio look with a warm brownish hue
+{ name: "Rustic Bookshelf", color: "#8E7155" }, // Worn wooden bookshelf for a nostalgic feel
+{ name: "Old School Chalkboard", color: "#5A4D42" }, // Green chalkboard with a vintage touch
+{ name: "Faded Diner Booth", color: "#B97D6C" }, // Soft retro diner booth color
+{ name: "Paper Lantern", color: "#C5D2B5" }, // A light, nostalgic lantern glow
+{ name: "Enchanted Moss", color: "#91D38E" }, // Bright moss with an enchanted green hue
+{ name: "Glowing Amber", color: "#F7A700" }, // A glowing, golden amber color for magical use
+{ name: "Icy Blue", color: "#A4D8F3" }, // Cool and frosty blue like ice in the morning light
+{ name: "Moonlit Stone", color: "#A9B1B5" }, // Stone with a soft moonlit glow
+{ name: "Shimmering Slate", color: "#6A5D6C" }, // Shiny slate stone with a soft shimmer
+{ name: "Mystic Jade", color: "#3C9B81" }, // Glowing jade with an aura of mystery
+{ name: "Silver Lining", color: "#B6B7B6" }, // A silver, reflective block for a futuristic touch
+{ name: "Petrified Wood", color: "#6E5B44" }, // A fossilized wood texture with deep brown hues
+{ name: "Chalked Stone", color: "#D2D3D0" }, // Stone with a faded chalky appearance
+{ name: "Celestial Brick", color: "#4D6B6C" }, // A celestial, starry brick with a glow
+{ name: "Electric Neon", color: "#F1FF7F" }, // Bright neon yellow with a futuristic feel
+];
+let currentBlockType = 0;
+const player = {
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+  width: blockSize,
+  height: blockSize,
+  color: "#FFDF00",
+  speed: 5,
+  gameMode: "Survival"
+};
+
+const ui = document.getElementById("ui");
+const blockList = document.getElementById("blockList");
+
+let playerVisible = true;
+let showBlockType = false;  // Variable to track whether 'd' key is pressed
+
+function generateWorld() {
+  world.length = 0;
+  for (let x = 0; x < canvas.width / blockSize; x++) {
+    for (let y = 0; y < canvas.height / blockSize; y++) {
+      if (y > canvas.height / blockSize - 3) {
+        world.push({ x: x * blockSize, y: y * blockSize, color: "#8B4513" });
+      } else if (y === canvas.height / blockSize - 3) {
+        world.push({ x: x * blockSize, y: y * blockSize, color: "#228B22" });
+      }
+    }
+  }
+}
+
+function drawWorld() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  world.forEach(block => {
+    ctx.fillStyle = block.color;
+    ctx.fillRect(block.x, block.y, blockSize, blockSize);
+    ctx.strokeStyle = "#000";
+    ctx.strokeRect(block.x, block.y, blockSize, blockSize);
+  });
+
+  if (playerVisible) drawPlayer();
+}
+
+function drawPlayer() {
+  ctx.fillStyle = player.color;
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
+
+function handleMouseClick(event) {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = event.clientX - rect.left;
+  const mouseY = event.clientY - rect.top;
+
+  if (event.button === 0) {
+    for (let i = 0; i < world.length; i++) {
+      if (
+        mouseX >= world[i].x &&
+        mouseX < world[i].x + blockSize &&
+        mouseY >= world[i].y &&
+        mouseY < world[i].y + blockSize
+      ) {
+        world.splice(i, 1);
+        break;
+      }
+    }
+  } else if (event.button === 2) {
+    const gridX = Math.floor(mouseX / blockSize) * blockSize;
+    const gridY = Math.floor(mouseY / blockSize) * blockSize;
+
+    if (!world.some(block => block.x === gridX && block.y === gridY)) {
+      world.push({ x: gridX, y: gridY, color: blockTypes[currentBlockType].color });
+    }
+  }
+
+  drawWorld();
+}
+
+  function handleMouseClick(event) {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      if (event.button === 0) {
+        for (let i = 0; i < world.length; i++) {
+          if (
+            mouseX >= world[i].x &&
+            mouseX < world[i].x + blockSize &&
+            mouseY >= world[i].y &&
+            mouseY < world[i].y + blockSize
+          ) {
+            world.splice(i, 1);
+            break;
+          }
+        }
+      } else if (event.button === 2) {
+        const gridX = Math.floor(mouseX / blockSize) * blockSize;
+        const gridY = Math.floor(mouseY / blockSize) * blockSize;
+
+        if (!world.some(block => block.x === gridX && block.y === gridY)) {
+          world.push({ x: gridX, y: gridY, color: blockTypes[currentBlockType].color });
+        }
+      }
+
+      drawWorld();
+    }
+
+function handleMiddleClick(event) {
+  if (event.button === 1) {
+    event.preventDefault();
+    
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+
+    // Find the block under the cursor
+    const clickedBlock = world.find(block => 
+      mouseX >= block.x && mouseX < block.x + blockSize &&
+      mouseY >= block.y && mouseY < block.y + blockSize
+    );
+
+    if (clickedBlock) {
+      // Find the index of the block type in the blockTypes array
+      const blockIndex = blockTypes.findIndex(type => type.color === clickedBlock.color);
+      if (blockIndex !== -1) {
+        currentBlockType = blockIndex;
+        console.log(`Copied block: ${blockTypes[currentBlockType].name}`);
+      }
+    }
+  }
+}
+function handleKeyPress(event) {
+  switch (event.key) {
+    case "ArrowUp":
+      player.y = Math.max(0, player.y - player.speed);
+      break;
+    case "ArrowDown":
+      player.y = Math.min(canvas.height - player.height, player.y + player.speed);
+      break;
+    case "ArrowLeft":
+      player.x = Math.max(0, player.x - player.speed);
+      break;
+    case "ArrowRight":
+      player.x = Math.min(canvas.width - player.width, player.x + player.speed);
+      break;
+    case "f":
+      ui.classList.toggle("hidden");
+      break;
+    case "g":
+      playerVisible = !playerVisible;
+      break;
+    case "c":
+      toggleBlockList();
+      break;
+    case "z":
+      saveWorldAsTxt();
+      break;
+    case "b":
+      document.getElementById("importFile").click();
+      break;
+    case "d":  // 'd' key toggles the block name display
+      showBlockType = !showBlockType;
+      break;
+  }
+  drawWorld();
+}
+
+
+    function toggleBlockList() {
+      blockList.style.display = blockList.style.display === "none" ? "block" : "none";
+      if (blockList.style.display === "block") {
+        blockList.innerHTML = '<input type="text" id="searchBar" placeholder="Search blocks..." oninput="filterBlocks()" />';
+        blockTypes.forEach((block, index) => {
+          const blockElement = document.createElement("div");
+          blockElement.className = "block-item";
+          blockElement.innerHTML = block.name;
+          blockElement.style.backgroundColor = block.color;
+          blockElement.addEventListener("click", () => {
+            currentBlockType = index;
+            blockList.style.display = "none";
+          });
+          blockList.appendChild(blockElement);
+        });
+      }
+    }
+
+    function filterBlocks() {
+      const searchQuery = document.getElementById("searchBar").value.toLowerCase();
+      const blockItems = document.querySelectorAll(".block-item");
+      blockItems.forEach(item => {
+        const blockName = item.innerHTML.toLowerCase();
+        item.style.display = blockName.includes(searchQuery) ? "block" : "none";
+      });
+    }
+
+function resetWorld() {
+  generateWorld();
+  drawWorld();
+}
+
+function resetPlayer() {
+  player.x = canvas.width / 2 - player.width / 2;
+  player.y = canvas.height / 2 - player.height / 2;
+  drawWorld();
+}
+
+function saveWorldAsTxt() {
+  const worldData = JSON.stringify(world);
+  const gameMode = player.gameMode;
+
+  let txtContent = `Game Mode: ${gameMode}\n\nBlocks:\n`;
+  world.forEach(block => {
+    txtContent += `Position: (${block.x}, ${block.y}), Block: ${block.color}\n`;
+  });
+
+  const blob = new Blob([txtContent], { type: 'text/plain' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "world_data.txt";
+  link.click();
+}
+
+function saveWorld() {
+  const worldData = {
+    world: {
+      blocks: world.map(block => ({ x: block.x, y: block.y, color: block.color })),
+      player: { position: [player.x, player.y], color: player.color }
+    }
+  };
+
+  const jsonData = JSON.stringify(worldData);
+
+  const blob = new Blob([jsonData], { type: 'application/json' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "world_data.json";
+  link.click();
+}
+
+function loadWorldFromJson(json) {
+  const worldData = JSON.parse(json);
+
+  world.length = 0;
+  worldData.world.blocks.forEach(block => {
+    world.push({ x: block.x, y: block.y, color: block.color });
+  });
+
+  player.x = worldData.world.player.position[0];
+  player.y = worldData.world.player.position[1];
+  player.color = worldData.world.player.color;
+
+  drawWorld();
+}
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    loadWorldFromJson(reader.result);
+  };
+  reader.readAsText(file);
+}
+
+// Disable right-click context menu
+document.addEventListener('contextmenu', function(event) {
+  event.preventDefault();
+});
+
+canvas.addEventListener("mousedown", handleMouseClick);
+canvas.addEventListener("auxclick", handleMiddleClick);
+window.addEventListener("keydown", handleKeyPress);
+document.getElementById("resetButton").addEventListener("click", resetWorld);
+document.getElementById("resetPlayerButton").addEventListener("click", resetPlayer);
+
+generateWorld();
+drawWorld();
+
+// Mouse hover functionality for 'd' key
+canvas.addEventListener("mousemove", (event) => {
+  if (!showBlockType) return;
+
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((event.clientX - rect.left) / blockSize);
+  const y = Math.floor((event.clientY - rect.top) / blockSize);
+
+  if (x >= 0 && x < canvas.width / blockSize && y >= 0 && y < canvas.height / blockSize) {
+    const block = world.find(block => block.x === x * blockSize && block.y === y * blockSize);
+    if (block) {
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "16px Arial";
+      ctx.fillText(blockTypes[blockTypes.findIndex(type => type.color === block.color)].name, event.clientX + 10, event.clientY + 10);
+    }
+  }
+});</script>
+</body>
+</html>
