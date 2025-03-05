@@ -16,7 +16,7 @@ document.getElementById('swfFile').addEventListener('change', function(event) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SWF Player</title>
-    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+<script src="ruffle.js"></script>
 </head>
 <body>
     <div id="ruffle-container" style="width: 100%; height: 100vh;"></div>
