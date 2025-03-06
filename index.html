@@ -6,10 +6,63 @@
     <title>Login</title>
     
     <style>
-        body {
+      .nav-menu {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    background-color: #222;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.nav-item {
+    width: 200px;
+    text-align: center;
+    border: 2px solid #444;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #333;
+    color: white;
+    font-family: Arial, sans-serif;
+    transition: 0.3s;
+}
+
+.nav-item:hover {
+    background-color: #444;
+}
+
+.nav-item img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.nav-item h3 {
+    font-size: 16px;
+    margin: 10px 0;
+}
+
+.nav-item a {
+    display: inline-block;
+    padding: 5px 10px;
+    background-color: #ff4500;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: 0.3s;
+}
+
+.nav-item a:hover {
+    background-color: #cc3700;
+}
+
+        
+      body {
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: #f4f4f4;
+            background-color: white;
             margin: 0;
             padding: 0;
             display: flex;
@@ -66,7 +119,7 @@
         }
 
         .game a:hover {
-            background-color: #0056b3;
+            background-color: red;
         }
     </style>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -202,11 +255,34 @@
         <h3>Riddle School 5</h3>
         <a href="games/RiddleSchool5 (1).html" target="_blank" rel="noopener noreferrer">Go Now</a>
     </div>
-         <div class="game" data-name="html page">
-        <img src="https://icon-library.com/images/go-arrow-icon/go-arrow-icon-9.jpg" alt="sonic">
-        <h3>HTML on the other side</h3>
+    </div>
+  <nav class="nav-menu">
+    <div class="nav-item" data-name="html page">
+        <img src="https://icon-library.com/images/go-arrow-icon/go-arrow-icon-9.jpg" alt="HTML Page">
+        <h3>HTML on the Other Side</h3>
         <a href="games/html.html" target="_blank" rel="noopener noreferrer">Go Now</a>
     </div>
+
+<nav class="nav-menu">
+    <div class="nav-item">
+        <img src="https://icon-library.com/images/go-arrow-icon/go-arrow-icon-9.jpg" alt="Home Page">
+        <h3>Home</h3>
+        <a href="index.html" rel="noopener noreferrer">Go Now</a>
+    </div>
+
+    <div class="nav-item">
+        <img src="https://icon-library.com/images/go-arrow-icon/go-arrow-icon-9.jpg" alt="Ed Page">
+        <h3>Go to Ed</h3>
+        <a href="games/Ed.html" rel="noopener noreferrer">Go Now</a>
+    </div>
+
+    <div class="nav-item">
+        <img src="https://icon-library.com/images/go-arrow-icon/go-arrow-icon-9.jpg" alt="HTML Page">
+        <h3>HTML on the Other Side</h3>
+        <a href="games/html.html" rel="noopener noreferrer">Go Now</a>
+    </div>
+</nav>
+
 </div>
 
 
