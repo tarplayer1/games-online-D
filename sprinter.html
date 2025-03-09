@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sprinter - BobbyGames</title>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      background-color: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-container {
+      width: 90%;
+      max-width: 1200px;
+      height: 80vh;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    button {
+      background: linear-gradient(to right, #ff6b6b, #556270);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: linear-gradient(to right, #ff946b, #445370);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game-container">
+    <iframe id="gameFrame" src="https://sciencemathedu.github.io/sprinter/" allowfullscreen></iframe>
+  </div>
+
+  <button onclick="toggleFullScreen()">🔳 Fullscreen</button>
+
+  <script>
+    function toggleFullScreen() {
+      var gameFrame = document.getElementById("gameFrame");
+      if (gameFrame.requestFullscreen) {
+        gameFrame.requestFullscreen();
+      } else if (gameFrame.mozRequestFullScreen) {
+        gameFrame.mozRequestFullScreen();
+      } else if (gameFrame.webkitRequestFullscreen) {
+        gameFrame.webkitRequestFullscreen();
+      } else if (gameFrame.msRequestFullscreen) {
+        gameFrame.msRequestFullscreen();
+      }
+    }
+  </script>
+
+</body>
+
+</html>
