@@ -56,10 +56,88 @@
     </style>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js"></script>
+    <!-- Firebase SDK (Modular Version) -->
+    <script type="module">
+        // Import the necessary Firebase SDK modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/9.1.3/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBG-AnxNXyxEk17dP9oPohdxjKMEPGwjqM",
+            authDomain: "testing2-c94ed.firebaseapp.com",
+            projectId: "testing2-c94ed",
+            storageBucket: "testing2-c94ed.firebasestorage.app",
+            messagingSenderId: "901114152631",
+            appId: "1:901114152631:web:6ad74bd836f57ea56faf32"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Sign up function
+        window.signUp = async function() {
+            const username = document.getElementById("signup-username").value;
+            const password = document.getElementById("signup-password").value;
+
+            // Basic validation
+            if (!username || !password) {
+                alert("Please fill in all required fields.");
+                return;
+            }
+
+            try {
+                // Sign up the user with Firebase Authentication
+                const userCredential = await createUserWithEmailAndPassword(auth, username, password);
+                const user = userCredential.user;
+
+                // Save user data to Firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    username: username,
+                });
+
+                alert("Account created successfully!");
+                switchToLogin();
+            } catch (error) {
+                alert("Error signing up: " + error.message);
+            }
+        }
+
+        // Login function
+        window.login = async function() {
+            const username = document.getElementById("login-username").value;
+            const password = document.getElementById("login-password").value;
+
+            try {
+                // Log in the user with Firebase Authentication
+                const userCredential = await signInWithEmailAndPassword(auth, username, password);
+                const user = userCredential.user;
+
+                // Get user data from Firestore
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    document.getElementById("user-message").textContent = `Welcome back, ${userDoc.data().username}!`;
+                    document.getElementById("user-message").style.display = "block";
+
+                    // Redirect to games page
+                    window.location.href = "games.html";
+                } else {
+                    alert("No such user found.");
+                }
+            } catch (error) {
+                alert("Invalid username or password.");
+            }
+        }
+
+        // Switch to login form
+        window.switchToLogin = function() {
+            document.getElementById("sign-up-form").style.display = "none";
+            document.getElementById("login-form").style.display = "block";
+        }
+    </script>
 </head>
 <body>
     <h1>Welcome to BOBBYGAMES</h1>
@@ -82,87 +160,5 @@
     </div>
 
     <div id="user-message" style="display: none;"></div>
-
-    <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBG-AnxNXyxEk17dP9oPohdxjKMEPGwjqM",
-            authDomain: "testing2-c94ed.firebaseapp.com",
-            projectId: "testing2-c94ed",
-            storageBucket: "testing2-c94ed.firebasestorage.app",
-            messagingSenderId: "901114152631",
-            appId: "1:901114152631:web:6ad74bd836f57ea56faf32"
-        };
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        function signUp() {
-            const username = document.getElementById("signup-username").value;
-            const password = document.getElementById("signup-password").value;
-
-            // Basic validation
-            if (!username || !password) {
-                alert("Please fill in all required fields.");
-                return;
-            }
-
-            // Sign up user with Firebase Authentication
-            auth.createUserWithEmailAndPassword(username, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-
-                    // Save user data in Firestore
-                    db.collection("users").doc(user.uid).set({
-                        username: username,
-                    }).then(() => {
-                        alert("Account created successfully!");
-                        switchToLogin();
-                    }).catch((error) => {
-                        alert("Error saving user to Firestore: " + error.message);
-                    });
-                })
-                .catch((error) => {
-                    alert("Error signing up: " + error.message);
-                });
-        }
-
-        function login() {
-            const username = document.getElementById("login-username").value;
-            const password = document.getElementById("login-password").value;
-
-            // Log in user with Firebase Authentication
-            auth.signInWithEmailAndPassword(username, password)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-
-                    // Get user data from Firestore
-                    db.collection("users").doc(user.uid).get()
-                        .then((docSnap) => {
-                            if (docSnap.exists) {
-                                document.getElementById("user-message").textContent = `Welcome back, ${docSnap.data().username}!`;
-                                document.getElementById("user-message").style.display = "block";
-
-                                // Redirect to games page
-                                window.location.href = "games.html";
-                            } else {
-                                alert("No such user found.");
-                            }
-                        }).catch((error) => {
-                            alert("Error getting user data: " + error.message);
-                        });
-                })
-                .catch((error) => {
-                    alert("Invalid username or password.");
-                });
-        }
-
-        function switchToLogin() {
-            document.getElementById("sign-up-form").style.display = "none";
-            document.getElementById("login-form").style.display = "block";
-        }
-    </script>
 </body>
 </html>
