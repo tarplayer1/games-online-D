@@ -79,7 +79,8 @@
     <div id="user-message" style="display: none;"></div>
 
     <script>
-        let userDatabase = JSON.parse(localStorage.getItem('users')) || [];
+        // Initialize the user database from localStorage (if available)
+        let userDatabase = JSON.parse(localStorage.getItem('users')) || {};
 
         function signUp() {
             const username = document.getElementById("signup-username").value;
@@ -92,14 +93,13 @@
             }
 
             // Check if the username already exists
-            if (userDatabase.some(user => user.username === username)) {
+            if (userDatabase[username]) {
                 alert("Username already taken!");
                 return;
             }
 
-            // Save user to localStorage
-            const newUser = { username, password };
-            userDatabase.push(newUser);
+            // Save user data in the database under their username
+            userDatabase[username] = { password };
             localStorage.setItem('users', JSON.stringify(userDatabase));
 
             alert("Account created successfully!");
@@ -111,9 +111,11 @@
             const username = document.getElementById("login-username").value;
             const password = document.getElementById("login-password").value;
 
-            const user = userDatabase.find(user => user.username === username && user.password === password);
+            // Find the user by username
+            const user = userDatabase[username];
 
-            if (user) {
+            // Check if the user exists and the password is correct
+            if (user && user.password === password) {
                 document.getElementById("user-message").textContent = `Welcome back, ${username}!`;
                 document.getElementById("user-message").style.display = "block";
 
@@ -131,4 +133,3 @@
     </script>
 </body>
 </html>
-
