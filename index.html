@@ -55,6 +55,11 @@
         }
     </style>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.4.0/firebase-firestore.js"></script>
 </head>
 <body>
     <h1>Welcome to BOBBYGAMES</h1>
@@ -79,8 +84,20 @@
     <div id="user-message" style="display: none;"></div>
 
     <script>
-        // Initialize the user database from localStorage (if available)
-        let userDatabase = JSON.parse(localStorage.getItem('users')) || {};
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBG-AnxNXyxEk17dP9oPohdxjKMEPGwjqM",
+            authDomain: "testing2-c94ed.firebaseapp.com",
+            projectId: "testing2-c94ed",
+            storageBucket: "testing2-c94ed.firebasestorage.app",
+            messagingSenderId: "901114152631",
+            appId: "1:901114152631:web:6ad74bd836f57ea56faf32"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
 
         function signUp() {
             const username = document.getElementById("signup-username").value;
@@ -92,38 +109,54 @@
                 return;
             }
 
-            // Check if the username already exists
-            if (userDatabase[username]) {
-                alert("Username already taken!");
-                return;
-            }
+            // Sign up user with Firebase Authentication
+            auth.createUserWithEmailAndPassword(username, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
 
-            // Save user data in the database under their username
-            userDatabase[username] = { password };
-            localStorage.setItem('users', JSON.stringify(userDatabase));
-
-            alert("Account created successfully!");
-
-            switchToLogin();
+                    // Save user data in Firestore
+                    db.collection("users").doc(user.uid).set({
+                        username: username,
+                    }).then(() => {
+                        alert("Account created successfully!");
+                        switchToLogin();
+                    }).catch((error) => {
+                        alert("Error saving user to Firestore: " + error.message);
+                    });
+                })
+                .catch((error) => {
+                    alert("Error signing up: " + error.message);
+                });
         }
 
         function login() {
             const username = document.getElementById("login-username").value;
             const password = document.getElementById("login-password").value;
 
-            // Find the user by username
-            const user = userDatabase[username];
+            // Log in user with Firebase Authentication
+            auth.signInWithEmailAndPassword(username, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
 
-            // Check if the user exists and the password is correct
-            if (user && user.password === password) {
-                document.getElementById("user-message").textContent = `Welcome back, ${username}!`;
-                document.getElementById("user-message").style.display = "block";
+                    // Get user data from Firestore
+                    db.collection("users").doc(user.uid).get()
+                        .then((docSnap) => {
+                            if (docSnap.exists) {
+                                document.getElementById("user-message").textContent = `Welcome back, ${docSnap.data().username}!`;
+                                document.getElementById("user-message").style.display = "block";
 
-                // Redirect to games page
-                window.location.href = "games.html";
-            } else {
-                alert("Invalid username or password.");
-            }
+                                // Redirect to games page
+                                window.location.href = "games.html";
+                            } else {
+                                alert("No such user found.");
+                            }
+                        }).catch((error) => {
+                            alert("Error getting user data: " + error.message);
+                        });
+                })
+                .catch((error) => {
+                    alert("Invalid username or password.");
+                });
         }
 
         function switchToLogin() {
