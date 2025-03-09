@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Such Great Times 2</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    body {
+      background: linear-gradient(135deg, #ff00ff, #ff4500, #ffcc00); /* Vibrant retro gradient */
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Press Start 2P', cursive;
+      text-align: center;
+      color: white;
+    }
+
+    h1 {
+      font-size: 2em;
+      text-shadow: 4px 4px 5px black;
+      animation: flicker 1.5s infinite alternate;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 1.2em;
+      text-shadow: 2px 2px 5px black;
+      margin-bottom: 20px;
+    }
+
+    .iframe-container {
+      width: 85%;
+      height: 75vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: 5px solid white;
+      border-radius: 10px;
+      box-shadow: 0 0 15px white;
+    }
+
+    @keyframes flicker {
+      0% { opacity: 1; }
+      50% { opacity: 0.8; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Such Great Times 2</h1>
+  <p>Written by tarplayer1 on GitHub</p>
+  
+  <div class="iframe-container">
+    <iframe src="https://docs.google.com/document/d/e/2PACX-1vQ-m6YQJI7lYSwKf_gUbP2F9fAlqhB06WMAbRQiv_JbI8FUA8ddK3aiAvQncd0_VLB6ZBkVmQTZlwz-/pub?embedded=true"></iframe>
+  </div>
+
+</body>
+</html>
