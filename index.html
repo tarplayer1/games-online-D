@@ -53,13 +53,15 @@
             color: #007BFF;
             cursor: pointer;
         }
+
+        #user-message {
+            margin-top: 20px;
+            color: green;
+        }
     </style>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
-    <h1>Welcome to BOBBYGAMES
-    no email needed just sign up=D
-    also if your acount dosent work refresh the page</h1>
+    <h1>Welcome to BOBBYGAMES</h1>
 
     <!-- Sign-Up Form -->
     <div class="form-container" id="sign-up-form">
@@ -123,8 +125,8 @@
                 document.getElementById("user-message").textContent = `Welcome back, ${username}!`;
                 document.getElementById("user-message").style.display = "block";
 
-                // Redirect to games page (for now it will stay on the same page)
-                window.location.href = "games.html";
+                // You can redirect the user to a new page after login (optional)
+                // window.location.href = "games.html";
             } else {
                 alert("Invalid username or password.");
             }
