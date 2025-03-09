@@ -46,6 +46,13 @@
         button:hover {
             background-color: #0056b3;
         }
+
+        .login-link {
+            margin-top: 10px;
+            text-decoration: none;
+            color: #007BFF;
+            cursor: pointer;
+        }
     </style>
     <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
@@ -58,6 +65,7 @@
         <input type="text" id="signup-username" placeholder="Enter Username">
         <input type="password" id="signup-password" placeholder="Enter Password">
         <button onclick="signUp()">Sign Up</button>
+        <button class="login-link" onclick="switchToLogin()">I already have an account</button>
     </div>
 
     <!-- Login Form -->
@@ -71,7 +79,7 @@
     <div id="user-message" style="display: none;"></div>
 
     <script>
-        let userDatabase = []; // This will simulate storing users locally for the demo
+        let userDatabase = JSON.parse(localStorage.getItem('users')) || [];
 
         function signUp() {
             const username = document.getElementById("signup-username").value;
@@ -79,7 +87,7 @@
 
             // Basic validation
             if (!username || !password) {
-                alert("Please fill in all fields.");
+                alert("Please fill in all required fields.");
                 return;
             }
 
@@ -89,9 +97,13 @@
                 return;
             }
 
-            // Save user
-            userDatabase.push({ username, password });
+            // Save user to localStorage
+            const newUser = { username, password };
+            userDatabase.push(newUser);
+            localStorage.setItem('users', JSON.stringify(userDatabase));
+
             alert("Account created successfully!");
+
             switchToLogin();
         }
 
@@ -104,7 +116,8 @@
             if (user) {
                 document.getElementById("user-message").textContent = `Welcome back, ${username}!`;
                 document.getElementById("user-message").style.display = "block";
-                // Redirect to the games page
+
+                // Redirect to games page
                 window.location.href = "games.html";
             } else {
                 alert("Invalid username or password.");
