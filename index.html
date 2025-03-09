@@ -249,6 +249,12 @@
 </div>
     
     <script>
+document.addEventListener("keydown", function(event) {
+    if (event.key === "`") {  // Detect backtick key
+        window.location.href = "ed.html";  // Change this to your target page
+    }
+});
+
         function filterGames() {
             let input = document.getElementById('search').value.toLowerCase();
             let games = document.querySelectorAll('.game');
