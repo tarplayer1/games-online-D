@@ -7,6 +7,31 @@
     <title>Login</title>
     
     <style>
+    /* Button styles */
+.hi {
+  background-color: #4CAF50; /* Green background */
+  color: white; /* White text */
+  border: none; /* No border */
+  padding: 15px 32px; /* Padding around the text */
+  text-align: center; /* Center the text */
+  text-decoration: none; /* Remove underline */
+  display: inline-block; /* Allow it to sit inline */
+  font-size: 16px; /* Font size */
+  cursor: pointer; /* Change cursor on hover */
+  border-radius: 8px; /* Rounded corners */
+  transition: background-color 0.3s; /* Smooth background change */
+}
+
+/* Hover effect */
+button:hover {
+  background-color: #45a049; /* Darker green when hovered */
+}
+
+/* Optional: Add some space around the button */
+button:focus {
+  outline: none; /* Remove focus outline */
+}
+
   
       body {
             font-family: Arial, sans-serif;
@@ -311,5 +336,46 @@ document.addEventListener("keydown", function(event) {
             });
         }
     </script>
+  <button class="hi" onclick="openRandomGame()">Play a Random Game</button>
+
+<script>
+  function openRandomGame() {
+    // Array of all game URLs
+    const games = [
+      "games/Stick-RPG-Complete.html",
+      "games/riddleschool.html",
+      "games/swf.html",
+      "games/rage.html",
+      "games/riddleschool2.html",
+      "games/riddleschool3.html",
+      "games/qwop.html",
+      "games/secure_LearnToFlyIdle.html",
+      "games/learn-to-fly.html",
+      "games/learn-to-fly-2-11967.html",
+      "games/Learn-To-Fly-3(1).html",
+      "games/duck-life.html",
+      "games/Duck Life 2 - World Champion.html",
+      "games/Duck Life 3 - Evolution.html",
+      "games/Duck Life 4.html",
+      "games/iq.html",
+      "games/iq2.html",
+      "games/swf to .html",
+      "games/sonic.html",
+      "games/riddleschool4.html",
+      "games/RiddleSchool5 (1).html",
+      "games/Run 1.html",
+      "games/Run 2.html",
+      "games/Run 3.html",
+      "games/eaglercraft.html"
+    ];
+
+    // Get a random index from the games array
+    const randomGame = games[Math.floor(Math.random() * games.length)];
+
+    // Redirect to the random game
+    window.location.href = randomGame;
+  }
+</script>
+
 </body>
 </html>
