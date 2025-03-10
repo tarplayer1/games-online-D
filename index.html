@@ -356,16 +356,92 @@ button:focus {
     
     <div align='center'><a href='https://www.free-website-hit-counter.com'><img src='https://www.free-website-hit-counter.com/zc.php?d=9&id=6636&s=37' border='0' alt='Free Website Hit Counter'></a><br /><small><a href='https://www.free-website-hit-counter.com' title="Free Website Hit Counter">Free website hit counter</a></small></div>
 
-  <script>
-    document.addEventListener("keydown", function(event) {
-    if (event.key === "`") {  // Detect backtick key
-        window.location.href = "ed.html";  // Change this to your target page
-    }
-    if (event.key === "0") {  // Detect 0 key
-        window.location.href = "https://docs.google.com";  // Redirect to Google Docs
-    }
-});
+<!-- Menu buttons -->
+    <div id="menu" class="menu-buttons">
+        <button id="google-docs-btn">Go to Google Docs</button>
+        <button id="google-slides-btn">Go to Google Slides</button>
+        <button id="pre-algebra-btn">Go to Pre Algebra</button>
+        <button id="custom-url-btn">Enter Custom URL</button>
+    </div>
 
+    <!-- Custom URL input -->
+    <div id="custom-url-container">
+        <label for="custom-url">Enter Custom URL:</label>
+        <input type="text" id="custom-url" placeholder="Enter URL here">
+        <button onclick="saveCustomUrl()">Save</button>
+    </div>
+
+    <script>
+        let menuOpened = false;  // Track if the menu has been opened
+        let menuSet = false;     // Track if the menu is set
+        let selectedUrl = "";    // Variable to hold the selected URL
+
+        // Load saved URL from localStorage, if any
+        if (localStorage.getItem("selectedUrl")) {
+            selectedUrl = localStorage.getItem("selectedUrl");
+            menuSet = true; // Mark the menu as set if there's a saved URL
+        }
+
+        // Listen for key presses
+        document.addEventListener("keydown", function(event) {
+            // If '1' key is pressed, show the menu
+            if (event.key === "1" && !menuOpened) {
+                document.getElementById("menu").style.display = "block";  // Show the menu
+                menuOpened = true;  // Mark the menu as opened
+            }
+
+            // If '0' key is pressed, go to the selected URL
+            if (event.key === "0" && menuSet) {
+                if (selectedUrl) {
+                    window.location.href = selectedUrl;  // Redirect to the chosen website
+                } else {
+                    alert("Please select a website first.");
+                }
+            }
+        });
+
+        // Button event listeners for the options
+        document.getElementById("google-docs-btn").addEventListener("click", function() {
+            selectedUrl = "https://docs.google.com";  // Set the selected URL
+            menuSet = true;  // Mark the menu as set
+            document.getElementById("menu").style.display = "none";  // Hide the menu
+            localStorage.setItem("selectedUrl", selectedUrl);  // Save to localStorage
+            alert("Google Docs selected. Press 0 to go there.");
+        });
+
+        document.getElementById("google-slides-btn").addEventListener("click", function() {
+            selectedUrl = "https://docs.google.com/presentation";  // Set the selected URL
+            menuSet = true;  // Mark the menu as set
+            document.getElementById("menu").style.display = "none";  // Hide the menu
+            localStorage.setItem("selectedUrl", selectedUrl);  // Save to localStorage
+            alert("Google Slides selected. Press 0 to go there.");
+        });
+
+        document.getElementById("pre-algebra-btn").addEventListener("click", function() {
+            selectedUrl = "https://www.khanacademy.org/math/pre-algebra";  // Set the selected URL
+            menuSet = true;  // Mark the menu as set
+            document.getElementById("menu").style.display = "none";  // Hide the menu
+            localStorage.setItem("selectedUrl", selectedUrl);  // Save to localStorage
+            alert("Pre Algebra selected. Press 0 to go there.");
+        });
+
+        document.getElementById("custom-url-btn").addEventListener("click", function() {
+            document.getElementById("custom-url-container").style.display = "block";  // Show the custom URL input
+        });
+
+        function saveCustomUrl() {
+            const url = document.getElementById("custom-url").value;
+            if (url) {
+                selectedUrl = url;  // Save the custom URL
+                menuSet = true;  // Mark the menu as set
+                document.getElementById("menu").style.display = "none";  // Hide the menu
+                document.getElementById("custom-url-container").style.display = "none";  // Hide the input
+                localStorage.setItem("selectedUrl", selectedUrl);  // Save to localStorage
+                alert("Custom URL selected. Press 0 to go there.");
+            } else {
+                alert("Please enter a valid URL.");
+            }
+        }
   </script>
   
 </body>
