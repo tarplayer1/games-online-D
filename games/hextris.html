@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hextris</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+    }
+
+    .content {
+      width: 80%;
+      height: 80%;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .fullscreen-button {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background: linear-gradient(to right, #ff6b6b, #556270);
+      color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .fullscreen-button:hover {
+      background: linear-gradient(to right, #ff946b, #445370);
+    }
+
+    .fullscreen-button:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="content">
+    <iframe id="gameFrame" src="https://sciencemathedu.github.io/hextris/" onload="focusGame()"></iframe>
+  </div>
+  <button class="fullscreen-button" onclick="toggleFullScreen()">Fullscreen</button>
+
+  <script>
+    function toggleFullScreen() {
+      var iframe = document.getElementById('gameFrame');
+      if (iframe.requestFullscreen) {
+        iframe.requestFullscreen();
+      } else if (iframe.mozRequestFullScreen) {
+        iframe.mozRequestFullScreen();
+      } else if (iframe.webkitRequestFullscreen) {
+        iframe.webkitRequestFullscreen();
+      } else if (iframe.msRequestFullscreen) {
+        iframe.msRequestFullscreen();
+      }
+      iframe.focus();
+    }
+
+    function focusGame() {
+      var iframe = document.getElementById('gameFrame');
+      iframe.focus();
+    }
+  </script>
+</body>
+
+</html>
